@@ -72,9 +72,21 @@ const Register = () => {
             placeholder="Enter your password"
           />
         </div>
+        <div>
+          <label htmlFor="confirmPassword" className="block text-white font-medium mb-2">
+            Confirm Password
+          </label>
+          <input
+            type="password"
+            id="confirmPassword"
+            required
+            className="border border-gray-300 rounded-md py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Confirm your password"
+          />  
+        </div>
         <button
           type="submit"
-          className="bg-blue-500 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-600 transition-colors duration-300"
+          className="bg-blue-500 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-600 transition-colors duration-300 mt-4"
           disabled={loading}
         >
           {loading ? "Registering..." : "Registered"}

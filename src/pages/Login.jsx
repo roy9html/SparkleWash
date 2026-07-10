@@ -90,7 +90,7 @@ const Login = () => {
           </h1>
           <h1
             className="mb-4 text-blue-500 hover:text-blue-700 cursor-pointer"
-            onClick={() => navigate("/forgot-password")}
+            onClick={() => navigate("/reset-password")}
           >
             forgot your password?
           </h1>
