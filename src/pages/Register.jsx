@@ -27,7 +27,7 @@ const Register = () => {
 
   return (
     <div className="grid justify-items-center shadow-[0_4px_6px_-1px_rgba(41,40,40,0.6)] mx-auto px-4 py-8 rounded-lg bg-gray-400 max-w-md mt-10">
-      <h1 className="text-5xl font-bold mb-4">SparkeSplash</h1>
+      <h1 className="text-5xl font-bold mb-4">SparkleWash</h1>
       <h1 className="text-3xl font-bold mb-4">register an account</h1>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
@@ -41,7 +41,7 @@ const Register = () => {
             required
             onChange={(e) => setName(e.target.value)}
             className="border border-gray-300 rounded-md py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter your name"
+            placeholder="Enter your name customer"
           />
         </div >
         <div className="mb-4">
@@ -55,7 +55,7 @@ const Register = () => {
             required
             onChange={(e) => setEmail(e.target.value)}
             className="border border-gray-300 rounded-md py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter your email"
+            placeholder="Enter your email my friend"
           />
         </div>
         <div className="mb-4">
@@ -69,7 +69,7 @@ const Register = () => {
             required
             onChange={(e) => setPassword(e.target.value)}
             className="border border-gray-300 rounded-md py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter your password"
+            placeholder="Enter your password my friend"
           />
         </div>
         <div>
@@ -81,7 +81,7 @@ const Register = () => {
             id="confirmPassword"
             required
             className="border border-gray-300 rounded-md py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Confirm your password"
+            placeholder="Confirm your password my friend"
           />  
         </div>
         <button
@@ -89,7 +89,7 @@ const Register = () => {
           className="bg-blue-500 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-600 transition-colors duration-300 mt-4"
           disabled={loading}
         >
-          {loading ? "Registering..." : "Registered"}
+          {loading ? "Registering..." : "Register"}
         </button>
       </form>
     </div>

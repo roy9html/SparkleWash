@@ -14,10 +14,10 @@ const ResetPassword = () => {
     setLoading(true);
     try {
       await resetPassword(email); 
-      toast.success("Password reset link sent to your email!");
+      toast.success("Password reset link sent to your email my friend!");
       navigate("/login");
     } catch (error) {
-      toast.error("Failed to send reset link. Please try again.");
+      toast.error("Ill be damned! Failed to send reset link. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -28,7 +28,7 @@ const ResetPassword = () => {
       <h1 className="text-5xl font-bold mb-4 text-black">SparkeSplash</h1>
       <h1 className="text-3xl font-bold mb-4 text-black">Reset Password</h1>
       <p className="text-white text-center mb-6">
-        Enter your email address and we'll send you a link to reset your password.
+        Howdy! Enter your email address and we'll send you a link to reset your password.
       </p>
       <form onSubmit={handleSubmit} className="w-full">
         <div className="mb-6">

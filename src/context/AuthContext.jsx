@@ -52,9 +52,9 @@ export const AuthProvider = ({children})=>{
             const {accessToken,user} = response.data;
             localStorage.setItem("accessToken",accessToken);
             setUser(user);
-            toast.success("Welcome my friend! Your account has been created.");
+            toast.success("Welcome my Sparrow! Your account has been created.");
         } catch(error){
-            toast.error(error.response?.data?.message || "Registration failed, please try again.");
+            toast.error(error.response?.data?.message || "ill be damned! Registration failed, please try again.");
         }
     }
 
@@ -63,7 +63,7 @@ export const AuthProvider = ({children})=>{
             await api.post("/auth/forgot-password",{email});
             toast.success("Password reset link has been sent to your email.");
         } catch(error){
-            toast.error(error.response?.data?.message || "Failed to send password reset link. Please try again.");
+            toast.error(error.response?.data?.message || "Howdy! Failed to send password reset link, Please try again my friend.");
         }
     }
     const resetPassword = async(token, newPassword)=>{
@@ -71,7 +71,7 @@ export const AuthProvider = ({children})=>{
             await api.post("/auth/reset-password",{token, newPassword});
             toast.success("Your password has been reset successfully.");
         } catch(error){
-            toast.error(error.response?.data?.message || "Failed to reset password. Please try again.");
+            toast.error(error.response?.data?.message || "Howdy! Failed to reset password,please try again.");
         }
     }
     const value = {
