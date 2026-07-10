@@ -6,12 +6,12 @@ const Hero = () => {
   return (
     <section 
       className="relative min-h-[600px] flex items-center justify-center bg-cover bg-center"
-      style={{ backgroundImage: "url('https://images.unsplash.com/photo-1607860108855-64acf2078ed9?w=1200')" }}
+      style={{ backgroundImage: "./assets/images/wash.jpg" }}
     >
-      {/* Dark overlay for better readability */}
+      
       <div className="absolute inset-0 bg-black/40"></div>
       
-      {/* Glassmorphism card */}
+      
       <div className="relative z-10 max-w-3xl mx-4 p-8 md:p-12 rounded-2xl bg-gray-400/30 backdrop-blur-md shadow-[0_4px_6px_-1px_rgba(41,40,40,0.6)] border border-white/20 text-center">
         <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
           Welcome to <span className="text-blue-200">SparkeSplash</span>
