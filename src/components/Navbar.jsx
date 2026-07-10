@@ -3,12 +3,35 @@ import { Link } from "react-router-dom";
 function Navbar() {
   return (
     <nav>
-      <Link to="/">Home</Link> |{" "}
-      <Link to="/about">About</Link> |{" "}
-      <Link to="/services">Services</Link> |{" "}
-      <Link to="/contact">Contact</Link> |{" "}
-      <Link to="/login">Login</Link> |{" "}
-      <Link to="/register">Register</Link>
+      <div>
+        <h2>SparkleWash</h2>
+      </div>
+
+      <ul>
+        <li>
+          <Link to="/">Home</Link>
+        </li>
+
+        <li>
+          <Link to="/about">About</Link>
+        </li>
+
+        <li>
+          <Link to="/services">Services</Link>
+        </li>
+
+        <li>
+          <Link to="/contact">Contact</Link>
+        </li>
+
+        <li>
+          <Link to="/login">Login</Link>
+        </li>
+
+        <li>
+          <Link to="/register">Register</Link>
+        </li>
+      </ul>
     </nav>
   );
 }
