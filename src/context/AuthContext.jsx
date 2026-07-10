@@ -46,17 +46,16 @@ export const AuthProvider = ({children})=>{
         toast.info("You have been logged out.");
     }
 
-    const register = async(name, email, password)=>{
-        try{
-            const response = await api.post("/auth/register",{name,email,password});
-            const {accessToken,user} = response.data;
-            localStorage.setItem("accessToken",accessToken);
-            setUser(user);
-            toast.success("Welcome my Sparrow! Your account has been created.");
-        } catch(error){
-            toast.error(error.response?.data?.message || "ill be damned! Registration failed, please try again.");
-        }
-    }
+ const register = async (name, email, password) => {
+  try {
+    await api.post("/auth/register", { name, email, password });
+    toast.success("Welcome! Your account has been created. Please log in.");
+    return { success: true };   
+  } catch (error) {
+    toast.error(error.response?.data?.message || "Registration failed, please try again.");
+    return { success: false, error: error.response?.data?.message };
+  }
+};
 
     const forgotPassword = async(email)=>{
         try{
