@@ -1,11 +1,10 @@
-import React,{useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
-import {LogIn} from "lucide-react"
+import { LogIn } from "lucide-react";
 // import Navbar from "../components/Navbar";
 // import Footer from "../components/Footer";
-
 
 const Login = () => {
   const { Login, user } = useAuth();
@@ -29,13 +28,13 @@ const Login = () => {
       setLoading(false);
     }
   };
-  
+
   useEffect(() => {
     if (user) {
       navigate("/dashboard");
     }
   }, [user, navigate]);
-  return(
+  return (
     <div>
       {/* <Navbar /> */}
       <div className="grid justify-items-center shadow-[0_4px_6px_-1px_rgba(41,40,40,0.6)] mx-auto px-4 py-8 rounded-lg bg-gray-400 max-w-md mt-10">
@@ -43,7 +42,10 @@ const Login = () => {
         <h1 className="text-3xl font-bold mb-4">Welcome Back!</h1>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="email" className="block text-white font-medium mb-2">
+            <label
+              htmlFor="email"
+              className="block text-white font-medium mb-2"
+            >
               Email
             </label>
             <input
@@ -57,7 +59,10 @@ const Login = () => {
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="password" className="block text-white font-medium mb-2">
+            <label
+              htmlFor="password"
+              className="block text-white font-medium mb-2"
+            >
               Password
             </label>
             <input
@@ -77,13 +82,22 @@ const Login = () => {
           >
             {loading ? "Logging in..." : "Login"}
           </button>
-          <h1 className="mb-4 mt-4 text-blue-500 hover:text-blue-700 cursor-pointer">click here to register</h1>
-          <h1 className="mb-4 text-blue-500 hover:text-blue-700 cursor-pointer">forgot your password?</h1>
+          <h1
+            className="mb-4 mt-4 text-blue-500 hover:text-blue-700 cursor-pointer"
+            onClick={() => navigate("/register")}
+          >
+            click here to register
+          </h1>
+          <h1
+            className="mb-4 text-blue-500 hover:text-blue-700 cursor-pointer"
+            onClick={() => navigate("/forgot-password")}
+          >
+            forgot your password?
+          </h1>
         </form>
-        
       </div>
       {/* <Footer /> */}
-    </div>  
-  )
-}
+    </div>
+  );
+};
 export default Login;
