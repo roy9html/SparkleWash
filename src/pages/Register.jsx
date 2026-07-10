@@ -28,7 +28,7 @@ const Register = () => {
   return (
     <div className="grid justify-items-center shadow-[0_4px_6px_-1px_rgba(41,40,40,0.6)] mx-auto px-4 py-8 rounded-lg bg-gray-400 max-w-md mt-10">
       <h1 className="text-5xl font-bold mb-4">SparkeSplash</h1>
-      <h1 className="text-3xl font-bold mb-4">Create an Account</h1>
+      <h1 className="text-3xl font-bold mb-4">register an account</h1>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label htmlFor="name" className="block text-white font-medium mb-2">
@@ -77,7 +77,7 @@ const Register = () => {
           className="bg-blue-500 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-600 transition-colors duration-300"
           disabled={loading}
         >
-          {loading ? "Registering..." : "Register"}
+          {loading ? "Registering..." : "Registered"}
         </button>
       </form>
     </div>
