@@ -1,5 +1,5 @@
-import { Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";   // <-- import
+import { Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";  
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Services from "./pages/Services";
@@ -17,6 +17,7 @@ function App() {
     <AuthProvider>
       <Toaster position="top-right" richColors closeButton />
       <Routes>
+        <Route path="/dashboard" element={<Navigate to="/customer/dashboard" replace />} />
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/services" element={<Services />} />
