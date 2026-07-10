@@ -1,12 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Car, Phone } from 'lucide-react';
+import heroImage from "../assets/images/wash.jpeg";
 
 const Hero = () => {
   return (
     <section 
       className="relative min-h-[600px] flex items-center justify-center bg-cover bg-center"
-      style={{ backgroundImage: "./assets/images/wash.jpg" }}
+      style={{ backgroundImage: `url(${heroImage})` }}
     >
       
       <div className="absolute inset-0 bg-black/40"></div>
