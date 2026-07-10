@@ -1,7 +1,8 @@
 import React, {useState} from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { toast} from "sonner";
+import { Bubbles} from "lucide-react";
 
 const Register = () => {
   const { register } = useAuth();
@@ -29,6 +30,7 @@ const Register = () => {
     <div className="grid justify-items-center shadow-[0_4px_6px_-1px_rgba(41,40,40,0.6)] mx-auto px-4 py-8 rounded-lg bg-gray-400 max-w-md mt-10">
       <h1 className="text-5xl font-bold mb-4">SparkleWash</h1>
       <h1 className="text-3xl font-bold mb-4">register an account</h1>
+      <Bubbles className="text-5xl font-bold mb-4 text-blue-500"  />
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label htmlFor="name" className="block text-white font-medium mb-2">
