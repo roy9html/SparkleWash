@@ -1,7 +1,11 @@
 import React from 'react';
+import Footer from '../components/Footer';
+import Navbar from '../components/Navbar';
 
 const About = () => {
   return (
+    <div>
+      <Navbar/>
     <div className="container mx-auto px-4 py-16">
       <div className="max-w-3xl mx-auto">
         <h1 className="text-4xl font-bold mb-6">About SparkeSplash</h1>
@@ -25,6 +29,8 @@ We’ve proudly supported our community with commitment and skill, ensuring ever
           </ul>
         </div>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 };

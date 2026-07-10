@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { Mail, Phone, MapPin } from 'lucide-react';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -30,6 +32,8 @@ const Contact = () => {
   };
 
   return (
+    <div>
+      <Navbar/>
     <div className="container mx-auto px-4 py-16">
       <h1 className="text-4xl font-bold text-center mb-12">Contact Us</h1>
       
@@ -40,7 +44,7 @@ const Contact = () => {
               <Phone className="text-blue-500 mt-1" size={24} />
               <div>
                 <h3 className="font-semibold">Phone</h3>
-                <p className="text-gray-600">+1 (555) 123-4567</p>
+                <p className="text-gray-600">+254740063099</p>
               </div>
             </div>
           </div>
@@ -59,8 +63,7 @@ const Contact = () => {
               <div>
                 <h3 className="font-semibold">Address</h3>
                 <p className="text-gray-600">
-                  123 Main Street<br />
-                  City, State 12345
+                  NGONG LANE, Nairobi, Kenya
                 </p>
               </div>
             </div>
@@ -124,6 +127,8 @@ const Contact = () => {
             </button>
           </form>
         </div>
+      </div>
+      <Footer />
       </div>
     </div>
   );
