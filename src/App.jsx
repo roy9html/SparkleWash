@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import About from "./pages/About";
 import Services from "./pages/Services";
 import Contact from "./pages/Contact";
+import { Toaster } from "sonner";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -15,6 +16,13 @@ import AdminDashboard from "./pages/admin/Dashboard";
 
 function App() {
   return (
+    <>
+    <Toaster
+        position="top-right"
+        richColors
+        closeButton
+      />
+
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/about" element={<About />} />
@@ -29,6 +37,7 @@ function App() {
       <Route path="/customer/dashboard" element={<CustomerDashboard />} />
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
     </Routes>
+    </>
   );
 }
 
