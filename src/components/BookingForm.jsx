@@ -43,7 +43,7 @@ const BookingForm = () => {
               required
               className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Select a service</option>
+              <option value="">Select a service here</option>
               <option value="car-wash">Car Wash</option>
               <option value="detailing">Detailing</option>
               <option value="oil-change">Oil Change</option>

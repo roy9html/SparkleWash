@@ -4,7 +4,7 @@ const CustomerTable = () => {
   const customers = [
     { id: 1, name: 'John Kamau', email: 'john@gmail.com', phone: '0790287332', bookings: 5 },
     { id: 2, name: 'Daniel Muthui', email: 'daniel@gmail.com', phone: '0721234567', bookings: 3 },
-    { id: 3, name: 'Martin Nyaga', email: 'nyaga@gmail.com', phone: '0111723353', bookings: 7 },
+    { id: 3, name: 'Martin Nyaga', email: 'nyaga@gmail.com', phone: '0111723354', bookings: 7 },
   ];
 
   return (

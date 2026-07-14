@@ -40,7 +40,7 @@ const ServiceCard = ({ title, description }) => {
         onClick={handleBooking}
         className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition text-sm"
       >
-        Book Now
+        Book Right Now
       </button>
     </div>
   );
