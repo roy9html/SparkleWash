@@ -7,7 +7,7 @@ const Home = () => {
     { id: 1, title: 'Car Wash', description: 'Professional car washing service' },
     { id: 2, title: 'Detailing', description: 'Complete interior and exterior detailing' },
     { id: 3, title: 'Oil Change', description: 'Quick and reliable oil change' },
-    { id: 4, title: 'Tire Service', description: 'Tire rotation and replacement' },
+    { id: 4, title: 'Tire Services', description: 'Tire rotation and replacement' },
   ];
 
   return (

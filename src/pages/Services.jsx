@@ -8,7 +8,7 @@ const Services = () => {
     { id: 3, title: 'Oil Change', description: 'Quick and reliable oil change' },
     { id: 4, title: 'Tire Service', description: 'Tire rotation and replacement' },
     { id: 5, title: 'Brake Service', description: 'Brake inspection and repair' },
-    { id: 6, title: 'Engine Service', description: 'Engine diagnostics and repair' },
+    { id: 6, title: 'Engine Serviced', description: 'Engine diagnostics and repair' },
   ];
 
   return (

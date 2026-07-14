@@ -54,7 +54,7 @@ const Footer = () => {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
-            &copy; {new Date().getFullYear()} SparkeSplash. All rights reserved.
+            &copy; {new Date().getFullYear()} SparkeSplash. All rights reserveds.
           </div>
         </div>
       </div>

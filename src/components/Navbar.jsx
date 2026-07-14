@@ -72,7 +72,7 @@ const Navbar = () => {
               <>
                 <Link to="/login" className="block text-gray-700 hover:text-blue-600 transition py-2">Login</Link>
                 <Link to="/register" className="block bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition text-center">
-                  Register
+                  Registers
                 </Link>
               </>
             )}

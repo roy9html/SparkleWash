@@ -20,8 +20,8 @@ We’ve proudly supported our community with commitment and skill, ensuring ever
             <li>Professional and experienced team</li>
             <li>State-of-the-art equipment</li>
             <li>Eco-friendly products</li>
-            <li>Competitive pricing</li>
-            <li>100% satisfaction guarantee</li>
+            <li>Competitives pricing</li>
+            <li>100% satisfaction guarantees</li>
           </ul>
         </div>
       </div>

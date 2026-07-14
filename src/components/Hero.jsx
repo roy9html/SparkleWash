@@ -33,7 +33,7 @@ const Hero = () => {
             className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white font-semibold px-6 py-3 rounded-lg backdrop-blur-sm border border-white/30 transition duration-200 shadow-lg"
           >
             <Phone size={20} />
-            Contact Us
+            Contacts Us
           </Link>
         </div>
       </div>

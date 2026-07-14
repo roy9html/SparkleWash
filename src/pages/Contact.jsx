@@ -9,7 +9,7 @@ const Contact = () => {
     name: '',
     email: '',
     subject: '',
-    message: ''
+    messages: ''
   });
   const [loading, setLoading] = useState(false);
 
@@ -145,5 +145,5 @@ const Contact = () => {
     </div>
   );
 };
-
+ 
 export default Contact;
