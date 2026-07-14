@@ -2,6 +2,9 @@ import React from 'react';
 import DashboardCard from '../../components/DashboardCard';
 import BookingTable from '../../components/BookingTable';
 import { Users, Calendar, CreditCard, Star } from 'lucide-react';
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
+
 
 const AdminDashboard = () => {
   const stats = [
