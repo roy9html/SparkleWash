@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext"; 
 import { Bubbles } from "lucide-react";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 const ResetPassword = () => {
   const { resetPassword } = useAuth(); 
@@ -25,6 +27,8 @@ const ResetPassword = () => {
   };
 
   return (
+    <div>
+      <Navbar />
     <div className="grid justify-items-center shadow-[0_4px_6px_-1px_rgba(41,40,40,0.6)] mx-auto px-4 py-8 rounded-lg bg-gray-400 max-w-md mt-10">
       <h1 className="text-5xl font-bold mb-4 text-black">SparkeSplash</h1>
       <h1 className="text-3xl font-bold mb-4 text-black">Reset Password</h1>
@@ -64,6 +68,8 @@ const ResetPassword = () => {
           Login
         </span>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 };
