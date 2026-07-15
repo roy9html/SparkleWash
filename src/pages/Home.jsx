@@ -1,46 +1,34 @@
-import Hero from "../components/Hero";
-import ServiceCard from "../components/ServiceCard";
+import React from 'react';
+import Hero from '../components/Hero';
+import ServiceCard from '../components/ServiceCard';
+import Footer from '../components/Footer';
+import Navbar from '../components/Navbar';
 
-function Home() {
+const Home = () => {
   const services = [
-    {
-      id: 1,
-      title: "Basic Wash",
-      description: "Exterior cleaning",
-      price: "KES 500",
-    },
-    {
-      id: 2,
-      title: "Premium Wash",
-      description: "Interior and exterior cleaning",
-      price: "KES 1200",
-    },
-    {
-      id: 3,
-      title: "Full Detailing",
-      description: "Complete detailing package",
-      price: "KES 2500",
-    },
+    { id: 1, title: 'Car Wash', description: 'Professional car washing service' },
+    { id: 2, title: 'Detailing', description: 'Complete interior and exterior detailing' },
+    { id: 3, title: 'Oil Change', description: 'Quick and reliable oil change' },
+    { id: 4, title: 'Tire Services', description: 'Tire rotation and replacement' },
   ];
 
   return (
-    <>
+    <div>
+      <Navbar />
       <Hero />
-
-      <section>
-        <h2>Our Popular Services</h2>
-
-        {services.map((service) => (
-          <ServiceCard
-            key={service.id}
-            title={service.title}
-            description={service.description}
-            price={service.price}
-          />
-        ))}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">Our Services</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {services.map(service => (
+              <ServiceCard key={service.id} {...service} />
+            ))}
+          </div>
+        </div>
       </section>
-    </>
+      <Footer />
+    </div>
   );
-}
+};
 
 export default Home;
