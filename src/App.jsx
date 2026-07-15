@@ -11,11 +11,13 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import CustomerDashboard from "./pages/customer/Dashboard";
 import AdminDashboard from "./pages/admin/Dashboard";
+import Background from "./components/Background";
 
 function App() {
   return (
     <AuthProvider>
       <Toaster position="top-right" richColors closeButton />
+      <Background />
       <Routes>
         <Route path="/dashboard" element={<Navigate to="/customer/dashboard" replace />} />
         <Route path="/" element={<Home />} />
