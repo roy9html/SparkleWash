@@ -1,6 +1,8 @@
 import React from 'react';
 import Hero from '../components/Hero';
 import ServiceCard from '../components/ServiceCard';
+import Footer from '../components/Footer';
+import Navbar from '../components/Navbar';
 
 const Home = () => {
   const services = [
@@ -12,6 +14,7 @@ const Home = () => {
 
   return (
     <div>
+      <Navbar />
       <Hero />
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
@@ -23,6 +26,7 @@ const Home = () => {
           </div>
         </div>
       </section>
+      <Footer />
     </div>
   );
 };
