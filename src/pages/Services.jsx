@@ -1,6 +1,7 @@
 import React from 'react';
 import ServiceCard from '../components/ServiceCard';
-
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 const Services = () => {
   const services = [
     { id: 1, title: 'Car Wash', description: 'Professional car washing service' },
@@ -12,12 +13,16 @@ const Services = () => {
   ];
 
   return (
+    <div>
+      <Navbar />
     <div className="container mx-auto px-4 py-16">
       <h1 className="text-4xl font-bold text-center mb-12">Our Services</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {services.map(service => (
           <ServiceCard key={service.id} {...service} />
         ))}
+      </div>
+      <Footer />
       </div>
     </div>
   );
