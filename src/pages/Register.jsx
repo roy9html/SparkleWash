@@ -40,7 +40,7 @@ const Register = () => {
   return (
     <div>
       <Navbar />
-      <div className="grid justify-items-center shadow-[0_4px_6px_-1px_rgba(41,40,40,0.6)] mx-auto px-4 py-8 rounded-lg bg-gray-400 max-w-md mt-10">
+      <div className="grid justify-items-center shadow-[0_4px_6px_-1px_rgba(41,40,40,0.6)] mx-auto px-4 py-8 rounded-lg bg-gray-400 max-w-md mt-10 mb-10">
         <h1 className="text-5xl font-bold mb-4">SparkleWash</h1>
         <h1 className="text-3xl font-bold mb-4">Register an Account</h1>
         <Bubbles className="text-5xl font-bold mb-4 text-blue-500" />
