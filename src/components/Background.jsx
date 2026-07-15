@@ -11,7 +11,7 @@ const Background = () => {
         className="w-full h-full object-cover pointer-events-none"
       >
         <source
-          src="/videos/zubbies.mp4"
+          src="/video/zubbies.mp4"
           type="video/mp4"
         />
       </video>
