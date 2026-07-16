@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem("accessToken", mockToken);
       setUser(userWithoutPassword);
       toast.success("Howdy! You are logged in.");
-      return;
+      return userWithoutPassword;
     }
 
     try {
@@ -78,6 +78,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem("accessToken", accessToken);
       setUser(user);
       toast.success("Howdy! You are logged in.");
+      return user;
     } catch (error) {
       toast.error(error.response?.data?.message || "Login failed please try again.");
       throw error;
