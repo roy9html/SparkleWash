@@ -36,12 +36,16 @@ export const AuthProvider = ({ children }) => {
     }
 
     if (USE_MOCK_AUTH) {
-      const { password, ...mockUser } = DUMMY_USERS[0];
-      setUser(mockUser);
+      const storedUser = localStorage.getItem("mockUser");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      } else {
+        localStorage.removeItem("accessToken");
+        setUser(null);
+      }
       setLoading(false);
       return;
     }
-
     api
       .get("/auth/me", { headers: { Authorization: `Bearer ${token}` } })
       .then((response) => {
@@ -68,6 +72,7 @@ export const AuthProvider = ({ children }) => {
       const { password: _, ...userWithoutPassword } = foundUser;
       const mockToken = "mock-jwt-token-" + Date.now();
       localStorage.setItem("accessToken", mockToken);
+      localStorage.setItem("mockUser", JSON.stringify(userWithoutPassword));
       setUser(userWithoutPassword);
       toast.success("Howdy! You are logged in.");
       return userWithoutPassword;
@@ -88,6 +93,7 @@ export const AuthProvider = ({ children }) => {
 
   const Logout = () => {
     localStorage.removeItem("accessToken");
+    localStorage.removeItem("mockUser");
     setUser(null);
     toast.info("You have been logged out.");
   };
