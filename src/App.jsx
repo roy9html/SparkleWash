@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";  
+import { AuthProvider } from "./context/AuthContext"; 
+import ProtectedRoute from "./components/ProtectedRoute";  
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Services from "./pages/Services";
@@ -19,7 +20,6 @@ function App() {
       <Toaster position="top-right" richColors closeButton />
       <Background />
       <Routes>
-        <Route path="/dashboard" element={<Navigate to="/customer/dashboard" replace />} />
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/services" element={<Services />} />
@@ -28,8 +28,17 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/customer/dashboard" element={<CustomerDashboard />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+
+        {/* Redirect /dashboard to customer dashboard (or role-based) */}
+        <Route path="/dashboard" element={<Navigate to="/customer/dashboard" replace />} /> 
+
+        <Route element={<ProtectedRoute allowedRoles={["customer"]} />}>
+          <Route path="/customer/dashboard" element={<CustomerDashboard />} />
+        </Route>
+
+        <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        </Route>
       </Routes>
     </AuthProvider>
   );
