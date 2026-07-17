@@ -4,12 +4,12 @@ import { useAuth } from '../context/AuthContext';
 import { User, LogOut, Menu } from 'lucide-react';
 
 const Navbar = () => {
-  const { user, logout } = useAuth();
+  const { user, Logout } = useAuth();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = React.useState(false);
 
   const handleLogout = () => {
-    logout();
+    Logout();
     navigate('/login');
   };
 
