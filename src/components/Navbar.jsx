@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { User, LogOut, Menu } from 'lucide-react';
+import { User, LogOut, Menu,Bubbles } from 'lucide-react';
 
 const Navbar = () => {
   const { user, Logout } = useAuth();
@@ -18,6 +18,7 @@ const Navbar = () => {
       <div className="container mx-auto px-4 py-3">
         <div className="flex justify-between items-center">
           <Link to="/" className="text-2xl font-bold text-blue-600">
+          <Bubbles size={28} className="text-blue-600" />
             SparkeSplash
           </Link>
           <div className="hidden md:flex items-center space-x-6">
