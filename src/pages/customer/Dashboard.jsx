@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
-import { Calendar, Clock, CheckCircle, XCircle, Plus, Trash2, Eye } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, XCircle, Plus, Trash2, Eye, CreditCard, X } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 
@@ -10,7 +10,6 @@ const CustomerDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
   // ---------- MOCK DATA ----------
-  // Services (same as admin – could be fetched from API later)
   const services = [
     { id: 1, name: 'Basic Wash', price: 800, duration: 30 },
     { id: 2, name: 'Premium Wash', price: 1500, duration: 45 },
@@ -18,18 +17,21 @@ const CustomerDashboard = () => {
     { id: 4, name: 'Interior Detailing', price: 3200, duration: 90 },
   ];
 
-  // User's bookings (mock – filtered by user id later)
   const [bookings, setBookings] = useState([
     { id: 1, service: 'Premium Wash', date: '2026-07-20 10:30', amount: 1500, status: 'confirmed' },
     { id: 2, service: 'Basic Wash', date: '2026-07-18 14:00', amount: 800, status: 'completed' },
     { id: 3, service: 'Deluxe Package', date: '2026-07-25 09:00', amount: 2800, status: 'pending' },
   ]);
 
-  // User's payments (mock)
   const [payments, setPayments] = useState([
     { id: 1, booking: 'Premium Wash', amount: 1500, method: 'MPesa', status: 'completed', date: '2026-07-20' },
     { id: 2, booking: 'Basic Wash', amount: 800, method: 'Cash', status: 'completed', date: '2026-07-18' },
   ]);
+
+  // ---------- PAYMENT MODAL STATE ----------
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState(null);
+  const [phoneNumber, setPhoneNumber] = useState('');
 
   // ---------- BOOKING FORM STATE ----------
   const [showBookingForm, setShowBookingForm] = useState(false);
@@ -37,8 +39,8 @@ const CustomerDashboard = () => {
 
   // ---------- STATS ----------
   const totalBookings = bookings.length;
-  const upcomingBookings = bookings.filter(b => b.status === 'pending' || b.status === 'confirmed').length;
-  const completedBookings = bookings.filter(b => b.status === 'completed').length;
+  const upcomingBookings = bookings.filter(b => b.status === 'pending' || b.status === 'confirmed');
+  const completedBookings = bookings.filter(b => b.status === 'completed');
   const totalSpent = payments.reduce((sum, p) => sum + p.amount, 0);
 
   // ---------- HANDLERS ----------
@@ -70,15 +72,31 @@ const CustomerDashboard = () => {
     toast.success('Booking created!');
   };
 
-  const handlePayment = (bookingId) => {
-    // Mock payment – just mark as completed and add payment record
-    const booking = bookings.find(b => b.id === bookingId);
+  // ---------- PAYMENT HANDLERS ----------
+  const openPaymentModal = (bookingId) => {
+    setSelectedBookingId(bookingId);
+    setPhoneNumber('');
+    setShowPaymentModal(true);
+  };
+
+  const closePaymentModal = () => {
+    setShowPaymentModal(false);
+    setSelectedBookingId(null);
+    setPhoneNumber('');
+  };
+
+  const handlePaymentSubmit = (e) => {
+    e.preventDefault();
+    const booking = bookings.find(b => b.id === selectedBookingId);
     if (!booking) return;
-    if (booking.status === 'completed' || booking.status === 'cancelled') {
-      toast.error('This booking cannot be paid');
+
+    // Validate phone number (basic)
+    if (!phoneNumber.trim() || !/^[0-9]{10,12}$/.test(phoneNumber.replace(/\s/g, ''))) {
+      toast.error('Please enter a valid phone number (e.g., 254712345678)');
       return;
     }
-    // Add payment
+
+    // Simulate payment processing (will be replaced with Daraja API)
     const newPayment = {
       id: payments.length + 1,
       booking: booking.service,
@@ -86,11 +104,12 @@ const CustomerDashboard = () => {
       method: 'MPesa',
       status: 'completed',
       date: new Date().toISOString().split('T')[0],
+      phone: phoneNumber,
     };
     setPayments([...payments, newPayment]);
-    // Update booking status
-    setBookings(bookings.map(b => b.id === bookingId ? { ...b, status: 'completed' } : b));
-    toast.success('Payment successful!');
+    setBookings(bookings.map(b => b.id === selectedBookingId ? { ...b, status: 'completed' } : b));
+    toast.success(`Payment of Kshs ${booking.amount} received from ${phoneNumber}`);
+    closePaymentModal();
   };
 
   // ---------- TAB RENDERING ----------
@@ -107,17 +126,41 @@ const CustomerDashboard = () => {
         </div>
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <p className="text-sm text-gray-500">Upcoming</p>
-          <p className="text-2xl font-bold text-blue-600">{upcomingBookings}</p>
+          <p className="text-2xl font-bold text-blue-600">{upcomingBookings.length}</p>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <p className="text-sm text-gray-500">Completed</p>
-          <p className="text-2xl font-bold text-green-600">{completedBookings}</p>
+          <p className="text-2xl font-bold text-green-600">{completedBookings.length}</p>
         </div>
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <p className="text-sm text-gray-500">Total Spent</p>
           <p className="text-2xl font-bold text-purple-600">Kshs {totalSpent}</p>
         </div>
       </div>
+
+      {upcomingBookings.length > 0 && (
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+          <h3 className="font-semibold text-lg mb-3">Pending/Confirmed Bookings – Pay Now</h3>
+          <div className="space-y-3">
+            {upcomingBookings.map(b => (
+              <div key={b.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div>
+                  <p className="font-medium">{b.service}</p>
+                  <p className="text-sm text-gray-500">{b.date} • Kshs {b.amount}</p>
+                </div>
+                <button
+                  onClick={() => openPaymentModal(b.id)}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center"
+                >
+                  <CreditCard className="w-4 h-4 mr-1" />
+                  Pay Now
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
         <h3 className="font-semibold text-lg mb-2">Quick Action</h3>
         <button
@@ -207,19 +250,26 @@ const CustomerDashboard = () => {
                     {b.status !== 'cancelled' && b.status !== 'completed' && (
                       <>
                         <button
-                          onClick={() => handlePayment(b.id)}
-                          className="text-green-600 hover:bg-green-50 p-1 rounded"
-                          title="Pay now"
+                          onClick={() => openPaymentModal(b.id)}
+                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs transition flex items-center mx-auto"
                         >
-                          <CheckCircle className="w-4 h-4" />
+                          <CreditCard className="w-3 h-3 mr-1" />
+                          Pay
                         </button>
                         <button
                           onClick={() => handleCancelBooking(b.id)}
                           className="text-red-600 hover:bg-red-50 p-1 rounded"
+                          title="Cancel"
                         >
                           <XCircle className="w-4 h-4" />
                         </button>
                       </>
+                    )}
+                    {b.status === 'completed' && (
+                      <span className="text-green-600 text-xs font-medium">Paid</span>
+                    )}
+                    {b.status === 'cancelled' && (
+                      <span className="text-red-600 text-xs font-medium">Cancelled</span>
                     )}
                   </td>
                 </tr>
@@ -243,6 +293,7 @@ const CustomerDashboard = () => {
               <th className="p-3 text-left">Method</th>
               <th className="p-3 text-left">Status</th>
               <th className="p-3 text-left">Date</th>
+              <th className="p-3 text-left">Phone</th>
             </tr>
           </thead>
           <tbody>
@@ -257,6 +308,7 @@ const CustomerDashboard = () => {
                   </span>
                 </td>
                 <td className="p-3">{p.date}</td>
+                <td className="p-3">{p.phone || '—'}</td>
               </tr>
             ))}
           </tbody>
@@ -264,6 +316,59 @@ const CustomerDashboard = () => {
       </div>
     </div>
   );
+
+  // ---------- PAYMENT MODAL ----------
+  const renderPaymentModal = () => {
+    if (!showPaymentModal) return null;
+    const booking = bookings.find(b => b.id === selectedBookingId);
+    if (!booking) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-xl max-w-md w-full p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-bold">Pay with M‑Pesa</h3>
+            <button onClick={closePaymentModal} className="text-gray-500 hover:text-gray-700">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+            <p className="text-sm text-gray-600">Service: <span className="font-semibold">{booking.service}</span></p>
+            <p className="text-sm text-gray-600">Amount: <span className="font-semibold">Kshs {booking.amount}</span></p>
+          </div>
+          <form onSubmit={handlePaymentSubmit}>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">M‑Pesa Phone Number</label>
+              <input
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="254712345678"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">Format: 254XXXXXXXXX (no spaces)</p>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={closePaymentModal}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+              >
+                Confirm Payment
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
 
   // ---------- TABS ----------
   const tabs = [
@@ -307,6 +412,7 @@ const CustomerDashboard = () => {
         {activeTab === 'payments' && renderPayments()}
       </div>
       <Footer />
+      {renderPaymentModal()}
     </div>
   );
 };
