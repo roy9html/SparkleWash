@@ -23,7 +23,7 @@ const AdminDashboard = () => {
           <DashboardCard key={index} {...stat} />
         ))}
       </div>
-      <div className="space-y-6">
+      <div className="space-y-6 mb-10">
         <BookingTable />
       </div>
       <Footer/>
