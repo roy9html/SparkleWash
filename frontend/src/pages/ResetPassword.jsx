@@ -29,7 +29,11 @@ const ResetPassword = () => {
   return (
     <div>
       <Navbar />
+<<<<<<< HEAD
     <div className="grid justify-items-center shadow-[0_4px_6px_-1px_rgba(41,40,40,0.6)] mx-auto px-4 py-8 rounded-lg bg-gray-400 max-w-md mt-10 mb-10">
+=======
+    <div className="grid justify-items-center shadow-[0_4px_6px_-1px_rgba(41,40,40,0.6)] mx-auto px-4 py-8 rounded-lg bg-gray-400 max-w-md mt-10">
+>>>>>>> 3af2580 (Added Frontend Folder)
       <h1 className="text-5xl font-bold mb-4 text-black">SparkeSplash</h1>
       <h1 className="text-3xl font-bold mb-4 text-black">Reset Password</h1>
       <Bubbles className="text-5xl font-bold mb-4 text-blue-500"  />
