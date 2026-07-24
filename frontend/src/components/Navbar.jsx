@@ -1,11 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-<<<<<<< Updated upstream
 import { User, LogOut, Menu,Bubbles } from 'lucide-react';
-=======
-import { User, LogOut, Menu, Bubbles } from 'lucide-react';
->>>>>>> Stashed changes
 
 const Navbar = () => {
   const { user, Logout } = useAuth();
