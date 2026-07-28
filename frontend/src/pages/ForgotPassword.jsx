@@ -1,172 +1,77 @@
-import React, { createContext, useState, useContext, useEffect } from "react";
-import api from "../services/api";
-import { toast } from "sonner";
+import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { Bubbles } from 'lucide-react';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
-const AuthContext = createContext({});
+const ForgotPassword = () => {
+  const { forgotPassword } = useAuth();
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-const USE_MOCK_AUTH = false;
-
-const DUMMY_USERS = [
-  {
-    id: 1,
-    name: "Sparrowlen",
-    email: "sparrowlen@example.com",
-    password: "123456",
-    role: "customer",
-  },
-  {
-    id: 2,
-    name: "Admin",
-    email: "admin@example.com",
-    password: "123456",
-    role: "admin",
-  },
-];
-
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await forgotPassword(email);
+      toast.success('Reset link sent to your email!');
+      navigate('/login');
+    } catch (error) {
+      toast.error('Failed to send reset link.');
+    } finally {
       setLoading(false);
-      return;
-    }
-
-    if (USE_MOCK_AUTH) {
-      const storedUser = localStorage.getItem("mockUser");
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
-      } else {
-        localStorage.removeItem("accessToken");
-        setUser(null);
-      }
-      setLoading(false);
-      return;
-    }
-
-    api
-      .get("/auth/me", { headers: { Authorization: `Bearer ${token}` } })
-      .then((response) => {
-        setUser(response.data);
-      })
-      .catch(() => {
-        localStorage.removeItem("accessToken");
-        setUser(null);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, []);
-
-  const Login = async (email, password) => {
-    if (USE_MOCK_AUTH) {
-      const foundUser = DUMMY_USERS.find(
-        (u) => u.email === email && u.password === password
-      );
-      if (!foundUser) {
-        toast.error("Invalid email or password");
-        throw new Error("Invalid email or password");
-      }
-      const { password: _, ...userWithoutPassword } = foundUser;
-      const mockToken = "mock-jwt-token-" + Date.now();
-      localStorage.setItem("accessToken", mockToken);
-      localStorage.setItem("mockUser", JSON.stringify(userWithoutPassword));
-      setUser(userWithoutPassword);
-      toast.success("Howdy! You are logged in.");
-      return userWithoutPassword;
-    }
-
-    try {
-      const response = await api.post("/auth/login", { email, password });
-      // Backend returns 'access_token' (with underscore)
-      const { access_token, user } = response.data;
-      localStorage.setItem("accessToken", access_token);
-      setUser(user);
-      toast.success("Howdy! You are logged in.");
-      return user;
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Login failed please try again.");
-      throw error;
     }
   };
 
-  const Logout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("mockUser");
-    setUser(null);
-    toast.info("You have been logged out.");
-  };
-
-  const register = async (name, email, password) => {
-    if (USE_MOCK_AUTH) {
-      const exists = DUMMY_USERS.some((u) => u.email === email);
-      if (exists) {
-        toast.error("Email already registered");
-        return { success: false };
-      }
-      toast.success("Welcome my Sparrow! Your account has been created.");
-      return { success: true };
-    }
-
-    try {
-      // Registration does NOT return a token; it only returns a success message.
-      await api.post("/auth/register", { name, email, password });
-      toast.success("Welcome my Sparrow! Your account has been created. Please log in.");
-      return { success: true };
-    } catch (error) {
-      toast.error(error.response?.data?.message || "ill be damned! Registration failed, please try again.");
-      return { success: false, error: error.response?.data?.message };
-    }
-  };
-
-  const forgotPassword = async (email) => {
-    if (USE_MOCK_AUTH) {
-      toast.success("Password reset link has been sent to your email.");
-      return;
-    }
-    try {
-      await api.post("/auth/forgot-password", { email });
-      toast.success("Password reset link has been sent to your email.");
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message ||
-          "Howdy! Failed to send password reset link, Please try again my friend."
-      );
-    }
-  };
-
-  const resetPassword = async (token, newPassword) => {
-    if (USE_MOCK_AUTH) {
-      toast.success("Your password has been reset successfully.");
-      return;
-    }
-    try {
-      await api.post("/auth/reset-password", { token, newPassword });
-      toast.success("Your password has been reset successfully.");
-    } catch (error) {
-      toast.error(
-        error.response?.data?.message ||
-          "Howdy! Failed to reset password,please try again."
-      );
-    }
-  };
-
-  const value = {
-    user,
-    loading,
-    Login,
-    register,
-    Logout,
-    forgotPassword,
-    resetPassword,
-    isAuthenticated: !!user,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <div>
+      <Navbar />
+      <div className="grid justify-items-center shadow-[0_4px_6px_-1px_rgba(41,40,40,0.6)] mx-auto px-4 py-8 rounded-lg bg-gray-400 max-w-md mt-10 mb-10">
+        <h1 className="text-5xl font-bold mb-4 text-black">SparkleWash</h1>
+        <h1 className="text-3xl font-bold mb-4 text-black">Forgot Password</h1>
+        <Bubbles className="text-5xl font-bold mb-4 text-blue-500" />
+        <p className="text-white text-center mb-6">
+          Enter your email address and we'll send you a link to reset your password.
+        </p>
+        <form onSubmit={handleSubmit} className="w-full">
+          <div className="mb-6">
+            <label htmlFor="email" className="block text-white font-medium mb-2">
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              required
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full border border-gray-300 rounded-md py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter your email"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50 transition-colors duration-300"
+          >
+            {loading ? 'Sending...' : 'Send Reset Link'}
+          </button>
+        </form>
+        <div className="mt-4 text-center">
+          <span className="text-white">Remember your password? </span>
+          <span
+            className="text-blue-500 hover:text-blue-700 cursor-pointer"
+            onClick={() => navigate('/login')}
+          >
+            Login
+          </span>
+        </div>
+      </div>
+      <Footer />
+    </div>
+  );
 };
 
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export default ForgotPassword;
