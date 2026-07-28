@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 import {
-  Users, Calendar, CreditCard, Star,
-  LayoutDashboard, Car, DollarSign,
-  Plus, Edit, Trash2, Eye, X,
-  Search, UserPlus, Package, TrendingUp,
-  Clock, CheckCircle, XCircle, AlertCircle
+  Users, Calendar, CreditCard, Car, DollarSign,
+  Plus, Edit, Trash2, X, Search, LayoutDashboard
 } from 'lucide-react';
+import api from '../../services/api';
 import DashboardCard from '../../components/DashboardCard';
 import BookingTable from '../../components/BookingTable';
 import Navbar from '../../components/Navbar';
@@ -18,53 +16,84 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // ---------- MOCK DATA ----------
-  const [users, setUsers] = useState([
-    { id: 1, name: 'Jane Mwangi', email: 'jane@example.com', role: 'customer', status: 'active', joined: '2026-01-15' },
-    { id: 2, name: 'Peter Ochieng', email: 'peter@example.com', role: 'customer', status: 'active', joined: '2026-02-20' },
-    { id: 3, name: 'Grace Akinyi', email: 'grace@example.com', role: 'customer', status: 'inactive', joined: '2026-03-10' },
-    { id: 4, name: 'Admin User', email: 'admin@example.com', role: 'admin', status: 'active', joined: '2026-01-01' },
-  ]);
+  // State from API
+  const [users, setUsers] = useState([]);
+  const [services, setServices] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [services, setServices] = useState([
-    { id: 1, name: 'Basic Wash', price: 800, duration: 30, isActive: true },
-    { id: 2, name: 'Premium Wash', price: 1500, duration: 45, isActive: true },
-    { id: 3, name: 'Deluxe Package', price: 2800, duration: 60, isActive: true },
-    { id: 4, name: 'Interior Detailing', price: 3200, duration: 90, isActive: false },
-  ]);
-
-  const [payments, setPayments] = useState([
-    { id: 1, user: 'Jane Mwangi', booking: 'Premium Wash', amount: 1500, method: 'MPesa', status: 'completed', date: '2026-07-16 10:30', ref: 'MPESA123' },
-    { id: 2, user: 'Peter Ochieng', booking: 'Basic Wash', amount: 800, method: 'Cash', status: 'pending', date: '2026-07-16 09:15', ref: 'CASH456' },
-    { id: 3, user: 'Grace Akinyi', booking: 'Deluxe Package', amount: 2800, method: 'MPesa', status: 'completed', date: '2026-07-15 16:45', ref: 'MPESA789' },
-    { id: 4, user: 'David Kamau', booking: 'Interior Detailing', amount: 3200, method: 'Card', status: 'failed', date: '2026-07-15 14:20', ref: 'CARD012' },
-  ]);
-
-  // ---------- MODAL STATE ----------
+  // Modal state
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState(''); // 'addUser', 'editUser', 'addService', 'editService'
+  const [modalType, setModalType] = useState('');
   const [currentItem, setCurrentItem] = useState(null);
   const [formData, setFormData] = useState({});
 
-  // ---------- STATS ----------
-  const totalUsers = users.length;
-  const activeServices = services.filter(s => s.isActive).length;
-  const totalRevenue = payments.filter(p => p.status === 'completed').reduce((sum, p) => sum + p.amount, 0);
-  const totalBookings = payments.length;
+  // Fetch all data
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [usersRes, servicesRes, paymentsRes, bookingsRes] = await Promise.all([
+        api.get('/users'),
+        api.get('/services'),
+        api.get('/payments'),
+        api.get('/bookings'),
+      ]);
+      setUsers(usersRes.data);
+      setServices(servicesRes.data);
+      setPayments(paymentsRes.data);
+      setBookings(bookingsRes.data);
+    } catch (error) {
+      toast.error('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // ---------- HANDLERS ----------
-  const handleDelete = (type, id) => {
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Stats
+  const totalUsers = users.length;
+  const activeServices = services.filter(s => s.is_active).length;
+  const totalRevenue = payments
+    .filter(p => p.status === 'completed')
+    .reduce((sum, p) => sum + p.amount, 0);
+  const totalBookings = bookings.length;
+
+  // CRUD Handlers
+  const handleDelete = async (type, id) => {
     if (!window.confirm(`Delete this ${type}?`)) return;
-    if (type === 'user') setUsers(users.filter(u => u.id !== id));
-    else if (type === 'service') setServices(services.filter(s => s.id !== id));
-    else if (type === 'payment') setPayments(payments.filter(p => p.id !== id));
-    toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} deleted`);
+    try {
+      await api.delete(`/${type}s/${id}`);
+      toast.success(`${type} deleted`);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Delete failed');
+    }
+  };
+
+  // Handle booking deletion from overview
+  const handleDeleteBooking = async (bookingId) => {
+    if (!window.confirm('Delete this booking?')) return;
+    try {
+      await api.delete(`/bookings/${bookingId}`);
+      toast.success('Booking deleted');
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Delete failed');
+    }
   };
 
   const openModal = (type, item = null) => {
     setModalType(type);
     setCurrentItem(item);
-    setFormData(item ? { ...item } : {});
+    if (item) {
+      setFormData({ ...item });
+    } else {
+      setFormData({});
+    }
     setShowModal(true);
   };
 
@@ -74,47 +103,104 @@ const AdminDashboard = () => {
     setFormData({});
   };
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
-    if (modalType === 'addUser') {
-      const newUser = {
-        id: users.length + 1,
-        name: formData.name,
-        email: formData.email,
-        role: formData.role || 'customer',
-        status: 'active',
-        joined: new Date().toISOString().split('T')[0],
-      };
-      setUsers([...users, newUser]);
-      toast.success('User added');
-    } else if (modalType === 'editUser') {
-      setUsers(users.map(u => u.id === currentItem.id ? { ...u, ...formData } : u));
-      toast.success('User updated');
-    } else if (modalType === 'addService') {
-      const newService = {
-        id: services.length + 1,
-        name: formData.name,
-        price: parseFloat(formData.price),
-        duration: parseInt(formData.duration),
-        isActive: true,
-      };
-      setServices([...services, newService]);
-      toast.success('Service added');
-    } else if (modalType === 'editService') {
-      setServices(services.map(s => s.id === currentItem.id ? { ...s, ...formData } : s));
-      toast.success('Service updated');
+    try {
+      let endpoint = '';
+      let payload = {};
+
+      if (modalType === 'addUser') {
+        endpoint = '/users';
+        payload = {
+          name: formData.name?.trim(),
+          email: formData.email?.trim(),
+          password: formData.password || 'password123',
+          role: formData.role || 'customer'
+        };
+        await api.post(endpoint, payload);
+        toast.success('User added');
+      } 
+      else if (modalType === 'editUser') {
+        endpoint = `/users/${currentItem.id}`;
+        payload = {
+          name: formData.name?.trim(),
+          email: formData.email?.trim(),
+          role: formData.role
+        };
+        await api.put(endpoint, payload);
+        toast.success('User updated');
+      } 
+      else if (modalType === 'addService') {
+        endpoint = '/services';
+        const price = parseFloat(formData.price);
+        const duration = parseInt(formData.duration_minutes, 10);
+        if (isNaN(price) || price <= 0) {
+          toast.error('Price must be a positive number');
+          return;
+        }
+        if (isNaN(duration) || duration <= 0) {
+          toast.error('Duration must be a positive integer');
+          return;
+        }
+        payload = {
+          name: formData.name?.trim(),
+          price: price,
+          duration_minutes: duration,
+          description: formData.description?.trim() || '',
+          is_active: true
+        };
+        await api.post(endpoint, payload);
+        toast.success('Service added');
+      } 
+      else if (modalType === 'editService') {
+        endpoint = `/services/${currentItem.id}`;
+        const price = parseFloat(formData.price);
+        const duration = parseInt(formData.duration_minutes, 10);
+        if (isNaN(price) || price <= 0) {
+          toast.error('Price must be a positive number');
+          return;
+        }
+        if (isNaN(duration) || duration <= 0) {
+          toast.error('Duration must be a positive integer');
+          return;
+        }
+        payload = {
+          name: formData.name?.trim(),
+          price: price,
+          duration_minutes: duration,
+          description: formData.description?.trim() || '',
+          is_active: formData.is_active !== undefined ? formData.is_active : true
+        };
+        await api.put(endpoint, payload);
+        toast.success('Service updated');
+      }
+      
+      closeModal();
+      fetchData();
+    } catch (error) {
+      console.error('Error response:', error.response);
+      console.error('Error data:', error.response?.data);
+      const errors = error.response?.data?.errors;
+      if (errors) {
+        const errorMessages = Object.values(errors).flat().join('. ');
+        toast.error(`Validation failed: ${errorMessages}`);
+      } else {
+        toast.error(error.response?.data?.message || 'Operation failed');
+      }
     }
-    closeModal();
   };
 
-  const handleStatusChange = (type, id, newStatus) => {
-    if (type === 'payment') {
-      setPayments(payments.map(p => p.id === id ? { ...p, status: newStatus } : p));
-      toast.success('Payment status updated');
+  const handleStatusChange = async (type, id, newStatus) => {
+    try {
+      await api.put(`/${type}s/${id}`, { status: newStatus });
+      toast.success('Status updated');
+      fetchData();
+    } catch (error) {
+      toast.error('Update failed');
     }
   };
 
-  // ---------- TAB RENDERING ----------
+  // ---------- RENDER FUNCTIONS ----------
   const renderOverview = () => (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
@@ -123,7 +209,7 @@ const AdminDashboard = () => {
         <DashboardCard title="Revenue" value={`Kshs ${totalRevenue.toLocaleString()}`} icon={<DollarSign size={24} />} color="purple" />
         <DashboardCard title="Bookings" value={totalBookings} icon={<Calendar size={24} />} color="orange" />
       </div>
-      <BookingTable />
+      <BookingTable bookings={bookings} onDelete={handleDeleteBooking} />
     </>
   );
 
@@ -143,12 +229,11 @@ const AdminDashboard = () => {
               <th className="p-3 text-left">Email</th>
               <th className="p-3 text-left">Role</th>
               <th className="p-3 text-left">Status</th>
-              <th className="p-3 text-left">Joined</th>
               <th className="p-3 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {users.filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase())).map(u => (
+            {users.filter(u => u.name?.toLowerCase().includes(searchTerm.toLowerCase())).map(u => (
               <tr key={u.id} className="border-t hover:bg-gray-50">
                 <td className="p-3">{u.name}</td>
                 <td className="p-3">{u.email}</td>
@@ -162,7 +247,6 @@ const AdminDashboard = () => {
                     {u.status}
                   </span>
                 </td>
-                <td className="p-3">{u.joined}</td>
                 <td className="p-3 text-center space-x-2">
                   <button onClick={() => openModal('editUser', u)} className="text-blue-600 hover:bg-blue-50 p-1 rounded"><Edit className="w-4 h-4" /></button>
                   <button onClick={() => handleDelete('user', u.id)} className="text-red-600 hover:bg-red-50 p-1 rounded"><Trash2 className="w-4 h-4" /></button>
@@ -189,20 +273,20 @@ const AdminDashboard = () => {
             <tr>
               <th className="p-3 text-left">Name</th>
               <th className="p-3 text-left">Price (Kshs)</th>
-              <th className="p-3 text-left">Duration</th>
+              <th className="p-3 text-left">Duration (min)</th>
               <th className="p-3 text-left">Status</th>
               <th className="p-3 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {services.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase())).map(s => (
+            {services.filter(s => s.name?.toLowerCase().includes(searchTerm.toLowerCase())).map(s => (
               <tr key={s.id} className="border-t hover:bg-gray-50">
                 <td className="p-3">{s.name}</td>
                 <td className="p-3">{s.price}</td>
-                <td className="p-3">{s.duration} min</td>
+                <td className="p-3">{s.duration_minutes}</td>
                 <td className="p-3">
-                  <span className={`px-2 py-1 rounded-full text-xs ${s.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {s.isActive ? 'Active' : 'Inactive'}
+                  <span className={`px-2 py-1 rounded-full text-xs ${s.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {s.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </td>
                 <td className="p-3 text-center space-x-2">
@@ -230,31 +314,29 @@ const AdminDashboard = () => {
               <th className="p-3 text-left">Method</th>
               <th className="p-3 text-left">Status</th>
               <th className="p-3 text-left">Date</th>
-              <th className="p-3 text-left">Ref</th>
               <th className="p-3 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {payments.filter(p => p.user.toLowerCase().includes(searchTerm.toLowerCase())).map(p => (
+            {payments.filter(p => p.user?.toLowerCase().includes(searchTerm.toLowerCase())).map(p => (
               <tr key={p.id} className="border-t hover:bg-gray-50">
                 <td className="p-3">{p.user}</td>
                 <td className="p-3">{p.booking}</td>
                 <td className="p-3">Kshs {p.amount}</td>
-                <td className="p-3">{p.method}</td>
+                <td className="p-3">{p.payment_method}</td>
                 <td className="p-3">
                   <select
                     value={p.status}
                     onChange={(e) => handleStatusChange('payment', p.id, e.target.value)}
-                    className={`text-xs rounded-full px-2 py-1 border-0 ${getStatusColor(p.status)}`}
+                    className="text-xs rounded-full px-2 py-1 border-0 bg-gray-100"
                   >
                     <option value="pending">Pending</option>
                     <option value="completed">Completed</option>
                     <option value="failed">Failed</option>
                   </select>
                 </td>
-                <td className="p-3">{p.date}</td>
-                <td className="p-3">{p.ref}</td>
-                <td className="p-3 text-center space-x-2">
+                <td className="p-3">{new Date(p.payment_date).toLocaleDateString()}</td>
+                <td className="p-3 text-center">
                   <button onClick={() => handleDelete('payment', p.id)} className="text-red-600 hover:bg-red-50 p-1 rounded"><Trash2 className="w-4 h-4" /></button>
                 </td>
               </tr>
@@ -265,22 +347,26 @@ const AdminDashboard = () => {
     </div>
   );
 
-  // ---------- UTILITY ----------
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'failed': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  // ---------- MODAL ----------
+  // Modal
   const renderModal = () => {
     if (!showModal) return null;
     const isEdit = modalType.includes('edit');
     const title = isEdit ? `Edit ${modalType.replace('edit','')}` : `Add New ${modalType.replace('add','')}`;
-    const fields = modalType.includes('User') ? ['name', 'email'] : ['name', 'price', 'duration'];
+    const fields = modalType.includes('User')
+      ? ['name', 'email']
+      : ['name', 'price', 'duration_minutes', 'description'];
+    const fieldLabels = {
+      name: 'Name',
+      email: 'Email',
+      price: 'Price (Kshs)',
+      duration_minutes: 'Duration (minutes)',
+      description: 'Description'
+    };
+    const getInputType = (f) => {
+      if (f === 'email') return 'email';
+      if (f === 'price' || f === 'duration_minutes') return 'number';
+      return 'text';
+    };
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-xl max-w-md w-full p-6">
@@ -291,14 +377,16 @@ const AdminDashboard = () => {
           <form onSubmit={handleSave}>
             {fields.map(f => (
               <div key={f} className="mb-3">
-                <label className="block text-sm font-medium text-gray-700 capitalize">{f}</label>
+                <label className="block text-sm font-medium text-gray-700 capitalize">
+                  {fieldLabels[f] || f}
+                </label>
                 <input
-                  type={f === 'email' ? 'email' : f === 'price' || f === 'duration' ? 'number' : 'text'}
+                  type={getInputType(f)}
                   value={formData[f] || ''}
                   onChange={(e) => setFormData({ ...formData, [f]: e.target.value })}
                   className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
-                  required
-                  step={f === 'price' ? '0.01' : '1'}
+                  required={f !== 'description'}
+                  step={f === 'price' ? '0.01' : f === 'duration_minutes' ? '1' : undefined}
                 />
               </div>
             ))}
@@ -325,13 +413,14 @@ const AdminDashboard = () => {
     );
   };
 
-  // ---------- TABS ----------
   const tabs = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'users', label: 'Users', icon: Users },
     { id: 'services', label: 'Services', icon: Car },
     { id: 'payments', label: 'Payments', icon: CreditCard },
   ];
+
+  if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -354,7 +443,6 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="border-b border-gray-200 mb-6">
           <nav className="flex space-x-4 overflow-x-auto">
             {tabs.map(tab => (
@@ -374,7 +462,6 @@ const AdminDashboard = () => {
           </nav>
         </div>
 
-        {/* Tab Content */}
         {activeTab === 'overview' && renderOverview()}
         {activeTab === 'users' && renderUsers()}
         {activeTab === 'services' && renderServices()}
