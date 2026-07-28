@@ -2,6 +2,7 @@ from flask import Flask
 from flask_restful import Api
 from extensions import db ,migrate 
 from config import Config
+from models.user import User 
 
 def create_app():
     
@@ -31,7 +32,7 @@ def create_app():
 
     # Create the API instance and bind it to the app
     api = Api(app)
-    
+    # In app.py or wherever you create the app
     return app 
 if __name__ == '__main__':
     app = create_app()
