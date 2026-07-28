@@ -1,18 +1,12 @@
 import React from 'react';
 
-const BookingTable = () => {
-  const bookings = [
-    { id: 1, customer: 'John Kamau', service: 'Car Wash', date: '2024-01-15', status: 'Confirmed' },
-    { id: 2, customer: 'Daniel Muthui', service: 'Detailing', date: '2024-01-16', status: 'Pending' },
-    { id: 3, customer: 'Martin Nyaga', service: 'Oil Change', date: '2024-01-17', status: 'Completed' },
-  ];
-
+const BookingTable = ({ bookings = [], onEdit, onDelete }) => {
   const getStatusColor = (status) => {
     const colors = {
-      'Confirmed': 'bg-green-100 text-green-800',
-      'Pending': 'bg-yellow-100 text-yellow-800',
-      'Completed': 'bg-blue-100 text-blue-800',
-      'Cancelled': 'bg-red-100 text-red-800',
+      'pending': 'bg-yellow-100 text-yellow-800',
+      'confirmed': 'bg-blue-100 text-blue-800',
+      'completed': 'bg-green-100 text-green-800',
+      'cancelled': 'bg-red-100 text-red-800',
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
@@ -38,23 +32,35 @@ const BookingTable = () => {
             </tr>
           </thead>
           <tbody>
-            {bookings.map((booking) => (
-              <tr key={booking.id} className="border-t border-gray-200 hover:bg-gray-50">
-                <td className="px-4 py-2">#{booking.id}</td>
-                <td className="px-4 py-2">{booking.customer}</td>
-                <td className="px-4 py-2">{booking.service}</td>
-                <td className="px-4 py-2">{booking.date}</td>
-                <td className="px-4 py-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
-                    {booking.status}
-                  </span>
-                </td>
-                <td className="px-4 py-2">
-                  <button className="text-blue-500 hover:text-blue-700 mr-2">Edit</button>
-                  <button className="text-red-500 hover:text-red-700">Delete</button>
-                </td>
-              </tr>
-            ))}
+            {bookings.length === 0 ? (
+              <tr><td colSpan="6" className="text-center py-4 text-gray-500">No bookings found</td></tr>
+            ) : (
+              bookings.map((booking) => (
+                <tr key={booking.id} className="border-t border-gray-200 hover:bg-gray-50">
+                  <td className="px-4 py-2">#{booking.id}</td>
+                  <td className="px-4 py-2">{booking.customer}</td>
+                  <td className="px-4 py-2">{booking.service}</td>
+                  <td className="px-4 py-2">{new Date(booking.booking_date).toLocaleString()}</td>
+                  <td className="px-4 py-2">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
+                      {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2">
+                    {onEdit && (
+                      <button onClick={() => onEdit(booking)} className="text-blue-500 hover:text-blue-700 mr-2">
+                        Edit
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button onClick={() => onDelete(booking.id)} className="text-red-500 hover:text-red-700">
+                        Delete
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

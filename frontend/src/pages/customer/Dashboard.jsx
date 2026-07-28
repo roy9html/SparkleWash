@@ -1,78 +1,122 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
-import { Calendar, Clock, CheckCircle, XCircle, Plus, Trash2, Eye, CreditCard, X } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, XCircle, CreditCard, X, Loader } from 'lucide-react';
+import api from '../../services/api';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 
 const CustomerDashboard = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
+  const [loading, setLoading] = useState(true);
 
-  // ---------- MOCK DATA ----------
-  const services = [
-    { id: 1, name: 'Basic Wash', price: 800, duration: 30 },
-    { id: 2, name: 'Premium Wash', price: 1500, duration: 45 },
-    { id: 3, name: 'Deluxe Package', price: 2800, duration: 60 },
-    { id: 4, name: 'Interior Detailing', price: 3200, duration: 90 },
-  ];
+  // Real data state
+  const [services, setServices] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [payments, setPayments] = useState([]);
 
-  const [bookings, setBookings] = useState([
-    { id: 1, service: 'Premium Wash', date: '2026-07-20 10:30', amount: 1500, status: 'confirmed' },
-    { id: 2, service: 'Basic Wash', date: '2026-07-18 14:00', amount: 800, status: 'completed' },
-    { id: 3, service: 'Deluxe Package', date: '2026-07-25 09:00', amount: 2800, status: 'pending' },
-  ]);
-
-  const [payments, setPayments] = useState([
-    { id: 1, booking: 'Premium Wash', amount: 1500, method: 'MPesa', status: 'completed', date: '2026-07-20' },
-    { id: 2, booking: 'Basic Wash', amount: 800, method: 'Cash', status: 'completed', date: '2026-07-18' },
-  ]);
-
-  // ---------- PAYMENT MODAL STATE ----------
+  // Payment modal state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState(null);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [isPaying, setIsPaying] = useState(false);
 
-  // ---------- BOOKING FORM STATE ----------
+  // Booking form
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [newBooking, setNewBooking] = useState({ serviceId: '', date: '', time: '' });
 
-  // ---------- STATS ----------
+  // Fetch data
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [servicesRes, bookingsRes, paymentsRes] = await Promise.all([
+        api.get('/services'),
+        api.get('/bookings'),
+        api.get('/payments'),
+      ]);
+      setServices(servicesRes.data);
+      setBookings(bookingsRes.data);
+      setPayments(paymentsRes.data);
+    } catch (error) {
+      toast.error('Failed to load dashboard');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Stats
   const totalBookings = bookings.length;
   const upcomingBookings = bookings.filter(b => b.status === 'pending' || b.status === 'confirmed');
   const completedBookings = bookings.filter(b => b.status === 'completed');
   const totalSpent = payments.reduce((sum, p) => sum + p.amount, 0);
 
-  // ---------- HANDLERS ----------
-  const handleCancelBooking = (id) => {
-    if (!window.confirm('Cancel this booking?')) return;
-    setBookings(bookings.map(b => b.id === id ? { ...b, status: 'cancelled' } : b));
-    toast.success('Booking cancelled');
+  // Poll payment status
+  const pollPaymentStatus = (paymentId, bookingId, maxAttempts = 15) => {
+    let attempts = 0;
+    const interval = setInterval(async () => {
+      attempts++;
+      try {
+        const response = await api.get(`/payments/${paymentId}`);
+        const payment = response.data;
+        if (payment.status === 'completed') {
+          clearInterval(interval);
+          toast.success('Payment completed successfully!');
+          fetchData();
+          setIsPaying(false);
+        } else if (payment.status === 'failed') {
+          clearInterval(interval);
+          toast.error('Payment failed. Please try again.');
+          setIsPaying(false);
+        } else if (attempts >= maxAttempts) {
+          clearInterval(interval);
+          toast.info('Payment is taking longer than expected. Please check your M-Pesa messages.');
+          setIsPaying(false);
+        }
+      } catch (error) {
+        // Ignore errors, continue polling
+      }
+    }, 2000);
   };
 
-  const handleBookService = (e) => {
+  // Handlers
+  const handleCancelBooking = async (id) => {
+    if (!window.confirm('Cancel this booking?')) return;
+    try {
+      await api.put(`/bookings/${id}`, { status: 'cancelled' });
+      toast.success('Booking cancelled');
+      fetchData();
+    } catch (error) {
+      toast.error('Cancellation failed');
+    }
+  };
+
+  const handleBookService = async (e) => {
     e.preventDefault();
     const { serviceId, date, time } = newBooking;
     if (!serviceId || !date || !time) {
       toast.error('Please fill all fields');
       return;
     }
-    const service = services.find(s => s.id === parseInt(serviceId));
-    if (!service) return;
-    const newBookingObj = {
-      id: bookings.length + 1,
-      service: service.name,
-      date: `${date} ${time}`,
-      amount: service.price,
-      status: 'pending',
-    };
-    setBookings([...bookings, newBookingObj]);
-    setNewBooking({ serviceId: '', date: '', time: '' });
-    setShowBookingForm(false);
-    toast.success('Booking created!');
+    const bookingDate = new Date(`${date}T${time}`).toISOString();
+    try {
+      const response = await api.post('/bookings', {
+        service_id: parseInt(serviceId),
+        booking_date: bookingDate,
+      });
+      toast.success('Booking created!');
+      setNewBooking({ serviceId: '', date: '', time: '' });
+      setShowBookingForm(false);
+      fetchData();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Booking failed');
+    }
   };
 
-  // ---------- PAYMENT HANDLERS ----------
   const openPaymentModal = (bookingId) => {
     setSelectedBookingId(bookingId);
     setPhoneNumber('');
@@ -83,36 +127,46 @@ const CustomerDashboard = () => {
     setShowPaymentModal(false);
     setSelectedBookingId(null);
     setPhoneNumber('');
+    setIsPaying(false);
   };
 
-  const handlePaymentSubmit = (e) => {
+  const handlePaymentSubmit = async (e) => {
     e.preventDefault();
     const booking = bookings.find(b => b.id === selectedBookingId);
     if (!booking) return;
-
-    // Validate phone number (basic)
     if (!phoneNumber.trim() || !/^[0-9]{10,12}$/.test(phoneNumber.replace(/\s/g, ''))) {
       toast.error('Please enter a valid phone number (e.g., 254712345678)');
       return;
     }
+    setIsPaying(true);
+    try {
+      const response = await api.post('/payments', {
+        booking_id: selectedBookingId,
+        amount: booking.total_amount,
+        payment_method: 'mpesa',
+        mpesa_phone: phoneNumber,
+      });
 
-    // Simulate payment processing (will be replaced with Daraja API)
-    const newPayment = {
-      id: payments.length + 1,
-      booking: booking.service,
-      amount: booking.amount,
-      method: 'MPesa',
-      status: 'completed',
-      date: new Date().toISOString().split('T')[0],
-      phone: phoneNumber,
-    };
-    setPayments([...payments, newPayment]);
-    setBookings(bookings.map(b => b.id === selectedBookingId ? { ...b, status: 'completed' } : b));
-    toast.success(`Payment of Kshs ${booking.amount} received from ${phoneNumber}`);
-    closePaymentModal();
+      const paymentId = response.data.id;
+      if (response.data.status === 'pending') {
+        toast.info('STK push sent. Please check your phone and enter your PIN to complete payment.');
+        closePaymentModal();
+        // Start polling
+        pollPaymentStatus(paymentId, booking.id);
+      } else {
+        toast.success('Payment completed successfully!');
+        closePaymentModal();
+        fetchData();
+        setIsPaying(false);
+      }
+    } catch (error) {
+      const errMsg = error.response?.data?.message || 'Payment failed. Please try again.';
+      toast.error(errMsg);
+      setIsPaying(false);
+    }
   };
 
-  // ---------- TAB RENDERING ----------
+  // Tabs rendering
   const renderOverview = () => (
     <div>
       <div className="mb-6">
@@ -146,14 +200,15 @@ const CustomerDashboard = () => {
               <div key={b.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
                   <p className="font-medium">{b.service}</p>
-                  <p className="text-sm text-gray-500">{b.date} • Kshs {b.amount}</p>
+                  <p className="text-sm text-gray-500">{new Date(b.booking_date).toLocaleString()} • Kshs {b.total_amount}</p>
                 </div>
                 <button
                   onClick={() => openPaymentModal(b.id)}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center"
+                  disabled={isPaying}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center disabled:opacity-50"
                 >
-                  <CreditCard className="w-4 h-4 mr-1" />
-                  Pay Now
+                  {isPaying ? <Loader className="w-4 h-4 mr-1 animate-spin" /> : <CreditCard className="w-4 h-4 mr-1" />}
+                  {isPaying ? 'Processing...' : 'Pay Now'}
                 </button>
               </div>
             ))}
@@ -239,8 +294,8 @@ const CustomerDashboard = () => {
               return (
                 <tr key={b.id} className="border-t hover:bg-gray-50">
                   <td className="p-3">{b.service}</td>
-                  <td className="p-3">{b.date}</td>
-                  <td className="p-3">Kshs {b.amount}</td>
+                  <td className="p-3">{new Date(b.booking_date).toLocaleString()}</td>
+                  <td className="p-3">Kshs {b.total_amount}</td>
                   <td className="p-3">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[b.status]}`}>
                       {b.status.charAt(0).toUpperCase() + b.status.slice(1)}
@@ -251,10 +306,11 @@ const CustomerDashboard = () => {
                       <>
                         <button
                           onClick={() => openPaymentModal(b.id)}
-                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs transition flex items-center mx-auto"
+                          disabled={isPaying}
+                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs transition flex items-center mx-auto disabled:opacity-50"
                         >
-                          <CreditCard className="w-3 h-3 mr-1" />
-                          Pay
+                          {isPaying ? <Loader className="w-3 h-3 mr-1 animate-spin" /> : <CreditCard className="w-3 h-3 mr-1" />}
+                          {isPaying ? 'Processing' : 'Pay'}
                         </button>
                         <button
                           onClick={() => handleCancelBooking(b.id)}
@@ -265,12 +321,8 @@ const CustomerDashboard = () => {
                         </button>
                       </>
                     )}
-                    {b.status === 'completed' && (
-                      <span className="text-green-600 text-xs font-medium">Paid</span>
-                    )}
-                    {b.status === 'cancelled' && (
-                      <span className="text-red-600 text-xs font-medium">Cancelled</span>
-                    )}
+                    {b.status === 'completed' && <span className="text-green-600 text-xs font-medium">Paid</span>}
+                    {b.status === 'cancelled' && <span className="text-red-600 text-xs font-medium">Cancelled</span>}
                   </td>
                 </tr>
               );
@@ -301,14 +353,14 @@ const CustomerDashboard = () => {
               <tr key={p.id} className="border-t hover:bg-gray-50">
                 <td className="p-3">{p.booking}</td>
                 <td className="p-3">Kshs {p.amount}</td>
-                <td className="p-3">{p.method}</td>
+                <td className="p-3">{p.payment_method}</td>
                 <td className="p-3">
                   <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
                     {p.status}
                   </span>
                 </td>
-                <td className="p-3">{p.date}</td>
-                <td className="p-3">{p.phone || '—'}</td>
+                <td className="p-3">{new Date(p.payment_date).toLocaleDateString()}</td>
+                <td className="p-3">{p.mpesa_phone || '—'}</td>
               </tr>
             ))}
           </tbody>
@@ -317,12 +369,11 @@ const CustomerDashboard = () => {
     </div>
   );
 
-  // ---------- PAYMENT MODAL ----------
+  // Payment modal
   const renderPaymentModal = () => {
     if (!showPaymentModal) return null;
     const booking = bookings.find(b => b.id === selectedBookingId);
     if (!booking) return null;
-
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-xl max-w-md w-full p-6">
@@ -334,7 +385,7 @@ const CustomerDashboard = () => {
           </div>
           <div className="mb-4 p-3 bg-gray-50 rounded-lg">
             <p className="text-sm text-gray-600">Service: <span className="font-semibold">{booking.service}</span></p>
-            <p className="text-sm text-gray-600">Amount: <span className="font-semibold">Kshs {booking.amount}</span></p>
+            <p className="text-sm text-gray-600">Amount: <span className="font-semibold">Kshs {booking.total_amount}</span></p>
           </div>
           <form onSubmit={handlePaymentSubmit}>
             <div className="mb-4">
@@ -350,18 +401,14 @@ const CustomerDashboard = () => {
               <p className="text-xs text-gray-500 mt-1">Format: 254XXXXXXXXX (no spaces)</p>
             </div>
             <div className="flex justify-end space-x-3">
-              <button
-                type="button"
-                onClick={closePaymentModal}
-                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-              >
-                Cancel
-              </button>
+              <button type="button" onClick={closePaymentModal} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                disabled={isPaying}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 flex items-center"
               >
-                Confirm Payment
+                {isPaying ? <Loader className="w-4 h-4 mr-1 animate-spin" /> : null}
+                {isPaying ? 'Processing...' : 'Confirm Payment'}
               </button>
             </div>
           </form>
@@ -370,12 +417,13 @@ const CustomerDashboard = () => {
     );
   };
 
-  // ---------- TABS ----------
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Calendar },
     { id: 'bookings', label: 'My Bookings', icon: Clock },
     { id: 'payments', label: 'My Payments', icon: CheckCircle },
   ];
+
+  if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -386,7 +434,6 @@ const CustomerDashboard = () => {
           <span className="text-sm text-gray-600">Welcome, {user?.name}</span>
         </div>
 
-        {/* Tabs */}
         <div className="border-b border-gray-200 mb-6">
           <nav className="flex space-x-4 overflow-x-auto">
             {tabs.map(tab => (
@@ -406,7 +453,6 @@ const CustomerDashboard = () => {
           </nav>
         </div>
 
-        {/* Tab Content */}
         {activeTab === 'overview' && renderOverview()}
         {activeTab === 'bookings' && renderBookings()}
         {activeTab === 'payments' && renderPayments()}
