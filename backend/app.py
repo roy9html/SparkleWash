@@ -1,25 +1,16 @@
 from flask import Flask
 from flask_restful import Api
-from extensions import db, migrate, cors, jwt, swagger, logger
+from extensions import db ,migrate 
 from config import Config
-from utils.logging_config import configure_logging
-from flask_mail import Mail   # <-- new import
-
-# Direct imports from resources modules
-from resources.auth import Register, Login, Logout, Refresh, Me, ForgotPassword, ResetPassword
-from resources.user import UserList, UserDetail
-from resources.service import ServiceList, ServiceDetail
-from resources.booking import BookingList, BookingDetail
-from resources.payment import PaymentList, PaymentDetail, PaymentCallback
 
 def create_app():
-    configure_logging()
+    
 
     app = Flask(__name__)
     app.config.from_object(Config)
 
     # Initialize extensions
-    db.init_app(app)
+    db.init_app(app = app)
     migrate.init_app(app, db)
     
 #    #  CORS configuration
@@ -41,7 +32,7 @@ def create_app():
     # Create the API instance and bind it to the app
     api = Api(app)
     
-    
+    return app 
 if __name__ == '__main__':
     app = create_app()
     app.run(debug=True, host='0.0.0.0', port=5000)
