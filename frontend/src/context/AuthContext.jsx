@@ -2,10 +2,9 @@ import React, { createContext, useState, useContext, useEffect } from "react";
 import api from "../services/api";
 import { toast } from "sonner";
 
-
 const AuthContext = createContext({});
 
-const USE_MOCK_AUTH = true;
+const USE_MOCK_AUTH = false;
 
 const DUMMY_USERS = [
   {
@@ -46,6 +45,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
       return;
     }
+
     api
       .get("/auth/me", { headers: { Authorization: `Bearer ${token}` } })
       .then((response) => {
@@ -80,8 +80,8 @@ export const AuthProvider = ({ children }) => {
 
     try {
       const response = await api.post("/auth/login", { email, password });
-      const { accessToken, user } = response.data;
-      localStorage.setItem("accessToken", accessToken);
+      const { access_token, user } = response.data;
+      localStorage.setItem("accessToken", access_token);
       setUser(user);
       toast.success("Howdy! You are logged in.");
       return user;
@@ -110,11 +110,8 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      const response = await api.post("/auth/register", { name, email, password });
-      const { accessToken, user } = response.data;
-      localStorage.setItem("accessToken", accessToken);
-      setUser(user);
-      toast.success("Welcome my Sparrow! Your account has been created.");
+      await api.post("/auth/register", { name, email, password });
+      toast.success("Welcome my Sparrow! Your account has been created. Please log in.");
       return { success: true };
     } catch (error) {
       toast.error(error.response?.data?.message || "ill be damned! Registration failed, please try again.");
