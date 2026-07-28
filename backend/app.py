@@ -2,7 +2,7 @@ from flask import Flask
 from flask_restful import Api
 from extensions import db ,migrate 
 from config import Config
-from models.user import User
+from models import User,Payment
 def create_app():
     
 
