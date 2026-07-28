@@ -2,8 +2,7 @@ from flask import Flask
 from flask_restful import Api
 from extensions import db ,migrate 
 from config import Config
-from models.user import User 
-
+from models.user import User
 def create_app():
     
 
