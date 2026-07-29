@@ -12,7 +12,8 @@ def create_app():
     migrate.init_app(app, db)
     
     # IMPORTANT: Import models here so they are registered with SQLAlchemy
-    from models import User, Booking, Payment
+    from models import User, Booking, Payment, Service
+    
     
     # Create the API instance
     api = Api(app)
