@@ -16,5 +16,5 @@ class PaymentSchema(Schema):
     @validates('transaction_id')
     def validate_transaction_id(self, value):
         if value and Payment.query.filter_by(transaction_id=value).first():
-            raise ValidationError('Transaction ID already exists')
+            raise ValidationError('howdy your transaction ID already exists')
         return value
