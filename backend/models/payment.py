@@ -6,7 +6,7 @@ class Payment(db.Model):
     __table_args__ = {'extend_existing': True}
 
     id = db.Column(db.Integer, primary_key=True)
-    booking_id = db.Column(db.Integer,  nullable=False) #db.ForeignKey('bookings.id'),
+    booking_id = db.Column(db.Integer, db.ForeignKey('bookings.id'), nullable=False) #db.ForeignKey('bookings.id'),
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     payment_method = db.Column(db.String(50), default='mpesa')

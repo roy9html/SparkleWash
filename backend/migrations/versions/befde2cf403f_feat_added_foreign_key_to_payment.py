@@ -1,8 +1,8 @@
-"""Initial migration
+"""feat:added foreign key to payment
 
-Revision ID: 8fe2dd995661
+Revision ID: befde2cf403f
 Revises: 
-Create Date: 2026-07-29 10:23:33.481449
+Create Date: 2026-07-29 10:39:25.269027
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '8fe2dd995661'
+revision = 'befde2cf403f'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -28,7 +28,6 @@ def upgrade():
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
-    
     op.create_table('users',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=100), nullable=False),
@@ -40,8 +39,6 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('email')
     )
-    
-    # Create bookings table with named foreign keys
     op.create_table('bookings',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
@@ -52,12 +49,9 @@ def upgrade():
     sa.Column('notes', sa.Text(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.ForeignKeyConstraint(['service_id'], ['services.id'], name='fk_booking_service'),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name='fk_booking_user'),
+    sa.ForeignKeyConstraint(['service_id'], ['services.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    
-    # Create payments table with named foreign keys
     op.create_table('payments',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('booking_id', sa.Integer(), nullable=False),
@@ -69,8 +63,8 @@ def upgrade():
     sa.Column('mpesa_receipt', sa.String(length=100), nullable=True),
     sa.Column('mpesa_phone', sa.String(length=20), nullable=True),
     sa.Column('payment_date', sa.DateTime(), nullable=True),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name='fk_payment_user'),
-    sa.ForeignKeyConstraint(['booking_id'], ['bookings.id'], name='fk_payment_booking'),
+    sa.ForeignKeyConstraint(['booking_id'], ['bookings.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('transaction_id')
     )
