@@ -5,7 +5,7 @@ from extensions import db, logger
 from models.user import User
 from schemas.user_schema import UserSchema
 from utils.auth_helpers import get_current_user
-from flask_mail import Message   # <-- new import
+from utils.email import send_email_via_brevo   
 import jwt
 from datetime import datetime, timedelta
 
@@ -78,7 +78,7 @@ class ForgotPassword(Resource):
             # For security, don't reveal if email exists
             return {'message': 'If that email exists, a reset link has been sent.'}, 200
 
-        # Generate a JWT token valid for 1 hour
+        # Generate JWT token valid for 1 hour
         token = jwt.encode(
             {'user_id': user.id, 'exp': datetime.utcnow() + timedelta(hours=1)},
             current_app.config['JWT_SECRET_KEY'],
@@ -88,23 +88,31 @@ class ForgotPassword(Resource):
         frontend_url = current_app.config.get('FRONTEND_URL', 'http://localhost:5173')
         reset_url = f"{frontend_url}/reset-password?token={token}"
 
-        # Send email
-        mail = current_app.mail if hasattr(current_app, 'mail') else current_app.extensions.get('mail')
-        if mail:
-            try:
-                msg = Message(
-                    subject="SparkleWash Password Reset",
-                    recipients=[user.email],
-                    body=f"Hello {user.name},\n\nClick the link below to reset your password:\n\n{reset_url}\n\nThis link will expire in 1 hour.\n\nIf you did not request this, please ignore this email.\n\nRegards,\nSparkleWash Team"
-                )
-                mail.send(msg)
-                logger.info(f"Password reset email sent to {user.email}")
-            except Exception as e:
-                logger.error(f"Failed to send email to {user.email}: {str(e)}")
-                # Fallback: log the link
-                logger.info(f"Password reset link for {user.email}: {reset_url}")
-        else:
-            logger.warning("Mail extension not initialized. Reset link logged only.")
+        # Send email via Brevo
+        subject = "SparkleWash Password Reset"
+        body_html = f"""
+        <h2>Hello {user.name},</h2>
+        <p>You requested to reset your password for SparkleWash.</p>
+        <p><a href="{reset_url}" style="background:#4CAF50;color:white;padding:10px 20px;text-decoration:none;border-radius:5px;">Reset Password</a></p>
+        <p>Or copy this link into your browser:</p>
+        <p><a href="{reset_url}">{reset_url}</a></p>
+        <p>This link will expire in <strong>1 hour</strong>.</p>
+        <p>If you did not request this, please ignore this email.</p>
+        <p>Regards,<br>SparkleWash Team</p>
+        """
+        body_text = f"Hello {user.name},\n\nYou requested to reset your password for SparkleWash.\n\nClick the link below:\n{reset_url}\n\nThis link will expire in 1 hour.\n\nIf you did not request this, please ignore this email.\n\nRegards,\nSparkleWash Team"
+
+        success, error = send_email_via_brevo(
+            to_email=user.email,
+            to_name=user.name,
+            subject=subject,
+            body_html=body_html,
+            body_text=body_text
+        )
+
+        if not success:
+            logger.warning(f"Email failed, but reset link is: {reset_url}")
+            # Log the link for manual testing
             logger.info(f"Password reset link for {user.email}: {reset_url}")
 
         return {'message': 'If that email exists, a reset link has been sent.'}, 200

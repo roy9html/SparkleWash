@@ -39,4 +39,10 @@ class Config:
 
 
 
+    BREVO_API_KEY = os.environ.get('BREVO_API_KEY')
+    BREVO_SENDER_EMAIL = os.environ.get('BREVO_SENDER_EMAIL')
+    BREVO_SENDER_NAME = os.environ.get('BREVO_SENDER_NAME', 'SparkleWash')
+
+
+
  

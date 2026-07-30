@@ -33,3 +33,7 @@ frontend/.vite/
 # Temporary files
 *.tmp
 *.temp
+backend/instance/
+backend/*.db
+backend/*.sqlite3
+backend/__pycache__/
