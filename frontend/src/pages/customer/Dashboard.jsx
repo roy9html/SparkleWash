@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 import { Calendar, Clock, CheckCircle, XCircle, CreditCard, X, Loader, Car } from 'lucide-react';
@@ -34,6 +34,9 @@ const CustomerDashboard = () => {
     color: ''
   });
 
+  // Ref to track the interval
+  const intervalRef = useRef(null);
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -54,6 +57,12 @@ const CustomerDashboard = () => {
 
   useEffect(() => {
     fetchData();
+    // Cleanup interval on unmount
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, []);
 
   const totalBookings = bookings.length;
@@ -65,27 +74,39 @@ const CustomerDashboard = () => {
 
   const pollPaymentStatus = (paymentId, bookingId, maxAttempts = 60) => {
     let attempts = 0;
-    const interval = setInterval(async () => {
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    intervalRef.current = setInterval(async () => {
       attempts++;
       try {
         const response = await api.get(`/payments/${paymentId}`);
         const payment = response.data;
         if (payment.status === 'completed') {
-          clearInterval(interval);
+          clearInterval(intervalRef.current);
           toast.success('Payment completed successfully!');
           fetchData();
           setIsPaying(false);
         } else if (payment.status === 'failed') {
-          clearInterval(interval);
+          clearInterval(intervalRef.current);
           toast.error('Payment failed. Please try again.');
           setIsPaying(false);
         } else if (attempts >= maxAttempts) {
-          clearInterval(interval);
+          clearInterval(intervalRef.current);
           toast.info('Payment is taking longer than expected. Please check your M-Pesa messages.');
           setIsPaying(false);
         }
       } catch (error) {
-        // Continue polling
+        // Stop polling on any error (including 401)
+        clearInterval(intervalRef.current);
+        if (error.response?.status === 401) {
+          toast.error('Session expired. Please login again.');
+          // The interceptor will handle redirect
+        } else {
+          toast.error('Payment status check failed.');
+        }
+        setIsPaying(false);
       }
     }, 2000);
   };

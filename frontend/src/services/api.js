@@ -16,4 +16,18 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-export default api;   
+// Add response interceptor to handle 401 errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("accessToken");
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 500);
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;
