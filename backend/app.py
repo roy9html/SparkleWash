@@ -31,6 +31,17 @@ def create_app():
                   methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
     jwt.init_app(app)
+    @jwt.unauthorized_loader
+    def unauthorized_response(callback):
+      return {'message': 'Missing or invalid token'}, 401
+
+    @jwt.invalid_token_loader
+    def invalid_token_response(callback):
+     return {'message': 'Invalid token'}, 401
+
+    @jwt.expired_token_loader
+    def expired_token_response(callback):
+     return {'message': 'Token has expired'}, 401
     swagger.init_app(app)
 
     # Initialize Mail (for password reset)
