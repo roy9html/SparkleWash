@@ -10,11 +10,12 @@ class Booking(db.Model):
     booking_date = db.Column(db.DateTime, nullable=False)
     status = db.Column(db.String(20), default='pending')
     total_amount = db.Column(db.Float, nullable=False)
+      
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # Relationships
+    # Relationshipspaid_amount = db.Column(db.Float, default=0.0)
     payments = db.relationship('Payment', backref='booking', lazy=True)
     
     
