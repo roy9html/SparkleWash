@@ -5,7 +5,7 @@ import { Calendar, Clock, CheckCircle, XCircle, CreditCard, X, Loader, Car } fro
 import api from '../../services/api';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
-import VehicleManager from '../../components/VehicleManager';  // <-- import
+import VehicleManager from '../../components/VehicleManager';
 
 const CustomerDashboard = () => {
   const { user } = useAuth();
@@ -23,7 +23,16 @@ const CustomerDashboard = () => {
   const [isPaying, setIsPaying] = useState(false);
 
   const [showBookingForm, setShowBookingForm] = useState(false);
-  const [newBooking, setNewBooking] = useState({ serviceId: '', date: '', time: '' });
+  const [newBooking, setNewBooking] = useState({
+    serviceId: '',
+    date: '',
+    time: '',
+    plate_number: '',
+    make: '',
+    model: '',
+    year: '',
+    color: ''
+  });
 
   const fetchData = async () => {
     setLoading(true);
@@ -94,19 +103,24 @@ const CustomerDashboard = () => {
 
   const handleBookService = async (e) => {
     e.preventDefault();
-    const { serviceId, date, time } = newBooking;
-    if (!serviceId || !date || !time) {
-      toast.error('Please fill all fields');
+    const { serviceId, date, time, plate_number, make, model, year, color } = newBooking;
+    if (!serviceId || !date || !time || !plate_number || !make || !model) {
+      toast.error('Please fill all required fields (service, date, time, plate, make, model)');
       return;
     }
     const bookingDate = new Date(`${date}T${time}`).toISOString();
     try {
-      const response = await api.post('/bookings', {
+      await api.post('/bookings', {
         service_id: parseInt(serviceId),
         booking_date: bookingDate,
+        vehicle_plate_number: plate_number.trim().toUpperCase(),
+        vehicle_make: make.trim(),
+        vehicle_model: model.trim(),
+        vehicle_year: parseInt(year) || null,
+        vehicle_color: color.trim() || ''
       });
       toast.success('Booking created!');
-      setNewBooking({ serviceId: '', date: '', time: '' });
+      setNewBooking({ serviceId: '', date: '', time: '', plate_number: '', make: '', model: '', year: '', color: '' });
       setShowBookingForm(false);
       fetchData();
     } catch (error) {
@@ -240,39 +254,94 @@ const CustomerDashboard = () => {
         </button>
         {showBookingForm && (
           <form onSubmit={handleBookService} className="mt-4 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Service</label>
-              <select
-                value={newBooking.serviceId}
-                onChange={(e) => setNewBooking({ ...newBooking, serviceId: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2"
-                required
-              >
-                <option value="">Select a service</option>
-                {services.map(s => (
-                  <option key={s.id} value={s.id}>{s.name} (Kshs {s.price})</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Date</label>
-              <input
-                type="date"
-                value={newBooking.date}
-                onChange={(e) => setNewBooking({ ...newBooking, date: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Time</label>
-              <input
-                type="time"
-                value={newBooking.time}
-                onChange={(e) => setNewBooking({ ...newBooking, time: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2"
-                required
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Service</label>
+                <select
+                  value={newBooking.serviceId}
+                  onChange={(e) => setNewBooking({ ...newBooking, serviceId: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2"
+                  required
+                >
+                  <option value="">Select a service</option>
+                  {services.map(s => (
+                    <option key={s.id} value={s.id}>{s.name} (Kshs {s.price})</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Date</label>
+                <input
+                  type="date"
+                  value={newBooking.date}
+                  onChange={(e) => setNewBooking({ ...newBooking, date: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Time</label>
+                <input
+                  type="time"
+                  value={newBooking.time}
+                  onChange={(e) => setNewBooking({ ...newBooking, time: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Plate Number</label>
+                <input
+                  type="text"
+                  value={newBooking.plate_number}
+                  onChange={(e) => setNewBooking({ ...newBooking, plate_number: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2"
+                  placeholder="e.g., KAA 123A"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Make</label>
+                <input
+                  type="text"
+                  value={newBooking.make}
+                  onChange={(e) => setNewBooking({ ...newBooking, make: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2"
+                  placeholder="e.g., Toyota"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Model</label>
+                <input
+                  type="text"
+                  value={newBooking.model}
+                  onChange={(e) => setNewBooking({ ...newBooking, model: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2"
+                  placeholder="e.g., Camry"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Year</label>
+                <input
+                  type="number"
+                  value={newBooking.year}
+                  onChange={(e) => setNewBooking({ ...newBooking, year: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2"
+                  placeholder="e.g., 2020"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Color</label>
+                <input
+                  type="text"
+                  value={newBooking.color}
+                  onChange={(e) => setNewBooking({ ...newBooking, color: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2"
+                  placeholder="e.g., Silver"
+                />
+              </div>
             </div>
             <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
               Submit Booking
@@ -389,7 +458,6 @@ const CustomerDashboard = () => {
     </div>
   );
 
-  // ---------- VEHICLES ----------
   const renderVehicles = () => (
     <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
       <h2 className="text-xl font-bold mb-4">My Vehicles</h2>
