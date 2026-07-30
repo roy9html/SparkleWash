@@ -13,6 +13,8 @@ from resources.booking import BookingList, BookingDetail
 from resources.payment import PaymentList, PaymentDetail, PaymentCallback
 from resources.vehicle import VehicleList, VehicleDetail
 
+from flask_jwt_extended.exceptions import NoAuthorizationError, InvalidHeaderError, WrongTokenError
+
 def create_app():
     configure_logging()
 
@@ -31,17 +33,29 @@ def create_app():
                   methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
     jwt.init_app(app)
+
+    # JWT error handlers
     @jwt.unauthorized_loader
     def unauthorized_response(callback):
-      return {'message': 'Missing or invalid token'}, 401
+        return {'message': 'Missing or invalid token'}, 401
 
     @jwt.invalid_token_loader
     def invalid_token_response(callback):
-     return {'message': 'Invalid token'}, 401
+        return {'message': 'Invalid token'}, 401
 
     @jwt.expired_token_loader
     def expired_token_response(callback):
-     return {'message': 'Token has expired'}, 401
+        return {'message': 'Token has expired'}, 401
+
+    # Explicit handler for NoAuthorizationError (and other JWT exceptions)
+    @app.errorhandler(NoAuthorizationError)
+    def handle_no_auth_error(e):
+        return {'message': 'Missing or invalid token'}, 401
+
+    @app.errorhandler(InvalidHeaderError)
+    def handle_invalid_header_error(e):
+        return {'message': 'Invalid authorization header'}, 401
+
     swagger.init_app(app)
 
     # Initialize Mail (for password reset)
@@ -86,9 +100,11 @@ def create_app():
     print("Registered /payments/<int:payment_id>")
     api.add_resource(PaymentCallback, '/payments/callback')
     print("Registered /payments/callback")
-    print("=== Done ===")
-    api.add_resource(VehicleList,'/vehicles')
+    api.add_resource(VehicleList, '/vehicles')
+    print("Registered /vehicles")
     api.add_resource(VehicleDetail, '/vehicles/<int:vehicle_id>')
+    print("Registered /vehicles/<int:vehicle_id>")
+    print("Done")
 
     logger.info("Application created successfully")
     return app
