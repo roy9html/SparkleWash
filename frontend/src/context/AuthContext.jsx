@@ -141,13 +141,15 @@ export const AuthProvider = ({ children }) => {
       return;
     }
     try {
-      await api.post("/auth/reset-password", { token, newPassword });
+      // ✅ Fix: backend expects 'new_password' (with underscore)
+      await api.post("/auth/reset-password", { token, new_password: newPassword });
       toast.success("Your password has been reset successfully.");
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
           "Howdy! Failed to reset password,please try again."
       );
+      throw error;
     }
   };
 
