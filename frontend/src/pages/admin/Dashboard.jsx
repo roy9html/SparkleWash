@@ -10,6 +10,7 @@ import DashboardCard from '../../components/DashboardCard';
 import BookingTable from '../../components/BookingTable';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
+import VehicleManager from '../../components/VehicleManager';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -74,7 +75,6 @@ const AdminDashboard = () => {
     }
   };
 
-  // Handle booking deletion from overview
   const handleDeleteBooking = async (bookingId) => {
     if (!window.confirm('Delete this booking?')) return;
     try {
@@ -347,6 +347,14 @@ const AdminDashboard = () => {
     </div>
   );
 
+  // ---------- VEHICLES ----------
+  const renderVehicles = () => (
+    <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+      <h2 className="text-xl font-bold mb-4">All Vehicles</h2>
+      <VehicleManager isAdmin={true} />
+    </div>
+  );
+
   // Modal
   const renderModal = () => {
     if (!showModal) return null;
@@ -418,6 +426,7 @@ const AdminDashboard = () => {
     { id: 'users', label: 'Users', icon: Users },
     { id: 'services', label: 'Services', icon: Car },
     { id: 'payments', label: 'Payments', icon: CreditCard },
+    { id: 'vehicles', label: 'Vehicles', icon: Car },
   ];
 
   if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
@@ -466,6 +475,7 @@ const AdminDashboard = () => {
         {activeTab === 'users' && renderUsers()}
         {activeTab === 'services' && renderServices()}
         {activeTab === 'payments' && renderPayments()}
+        {activeTab === 'vehicles' && renderVehicles()}
 
         {renderModal()}
       </div>
