@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Droplets, User, LogOut, Menu, X } from 'lucide-react';
+import { Droplets, User, LogOut, Menu, X, Settings, Calendar, Users } from 'lucide-react';
 
 const Navbar = () => {
   const { user, Logout } = useAuth();
@@ -34,13 +34,46 @@ const Navbar = () => {
 
             {user ? (
               <div className="flex items-center space-x-4">
+                {/* Profile (always visible when logged in) */}
+                <Link
+                  to="/profile"
+                  className="text-gray-700 hover:text-blue-600 transition font-medium flex items-center"
+                >
+                  <User size={18} className="mr-1" />
+                  Profile
+                </Link>
+
+                {/* My Bookings (customer only) */}
+                {user.role === 'customer' && (
+                  <Link
+                    to="/customer/bookings"
+                    className="text-gray-700 hover:text-blue-600 transition font-medium flex items-center"
+                  >
+                    <Calendar size={18} className="mr-1" />
+                    My Bookings
+                  </Link>
+                )}
+
+                {/* Users (admin only) */}
+                {user.role === 'admin' && (
+                  <Link
+                    to="/admin/users"
+                    className="text-gray-700 hover:text-blue-600 transition font-medium flex items-center"
+                  >
+                    <Users size={18} className="mr-1" />
+                    Users
+                  </Link>
+                )}
+
+                {/* Dashboard (role‑based) */}
                 <Link
                   to={user.role === 'admin' ? '/admin/dashboard' : '/customer/dashboard'}
                   className="text-gray-700 hover:text-blue-600 transition font-medium flex items-center"
                 >
-                  <User size={18} className="mr-1" />
+                  <Settings size={18} className="mr-1" />
                   Dashboard
                 </Link>
+
                 <button
                   onClick={handleLogout}
                   className="flex items-center text-red-500 hover:text-red-700 transition font-medium"
@@ -59,6 +92,7 @@ const Navbar = () => {
             )}
           </div>
 
+          {/* Mobile Menu Button */}
           <button
             className="md:hidden text-gray-700 hover:text-blue-600 transition"
             onClick={toggleMenu}
@@ -67,6 +101,7 @@ const Navbar = () => {
           </button>
         </div>
 
+        {/* Mobile Menu */}
         {isOpen && (
           <div className="md:hidden mt-4 pt-4 border-t border-gray-200 space-y-3">
             <Link to="/" className="block text-gray-700 hover:text-blue-600 transition font-medium py-2" onClick={toggleMenu}>Home</Link>
@@ -76,14 +111,34 @@ const Navbar = () => {
 
             {user ? (
               <>
+                <Link to="/profile" className="block text-gray-700 hover:text-blue-600 transition font-medium py-2 flex items-center" onClick={toggleMenu}>
+                  <User size={18} className="mr-2" />
+                  Profile
+                </Link>
+
+                {user.role === 'customer' && (
+                  <Link to="/customer/bookings" className="block text-gray-700 hover:text-blue-600 transition font-medium py-2 flex items-center" onClick={toggleMenu}>
+                    <Calendar size={18} className="mr-2" />
+                    My Bookings
+                  </Link>
+                )}
+
+                {user.role === 'admin' && (
+                  <Link to="/admin/users" className="block text-gray-700 hover:text-blue-600 transition font-medium py-2 flex items-center" onClick={toggleMenu}>
+                    <Users size={18} className="mr-2" />
+                    Users
+                  </Link>
+                )}
+
                 <Link
                   to={user.role === 'admin' ? '/admin/dashboard' : '/customer/dashboard'}
                   className="block text-gray-700 hover:text-blue-600 transition font-medium py-2 flex items-center"
                   onClick={toggleMenu}
                 >
-                  <User size={18} className="mr-2" />
+                  <Settings size={18} className="mr-2" />
                   Dashboard
                 </Link>
+
                 <button
                   onClick={() => {
                     handleLogout();
