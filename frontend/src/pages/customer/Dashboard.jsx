@@ -11,22 +11,19 @@ const CustomerDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
 
-  // Real data state
   const [services, setServices] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [payments, setPayments] = useState([]);
 
-  // Payment modal state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState(null);
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [paymentAmount, setPaymentAmount] = useState('');
   const [isPaying, setIsPaying] = useState(false);
 
-  // Booking form
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [newBooking, setNewBooking] = useState({ serviceId: '', date: '', time: '' });
 
-  // Fetch data
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -49,14 +46,14 @@ const CustomerDashboard = () => {
     fetchData();
   }, []);
 
-  // Stats
   const totalBookings = bookings.length;
   const upcomingBookings = bookings.filter(b => b.status === 'pending' || b.status === 'confirmed');
   const completedBookings = bookings.filter(b => b.status === 'completed');
-  const totalSpent = payments.reduce((sum, p) => sum + p.amount, 0);
+  const totalSpent = payments
+    .filter(p => p.status === 'completed')
+    .reduce((sum, p) => sum + p.amount, 0);
 
-  // Poll payment status
-  const pollPaymentStatus = (paymentId, bookingId, maxAttempts = 15) => {
+  const pollPaymentStatus = (paymentId, bookingId, maxAttempts = 60) => {
     let attempts = 0;
     const interval = setInterval(async () => {
       attempts++;
@@ -78,12 +75,11 @@ const CustomerDashboard = () => {
           setIsPaying(false);
         }
       } catch (error) {
-        // Ignore errors, continue polling
+        // Continue polling
       }
     }, 2000);
   };
 
-  // Handlers
   const handleCancelBooking = async (id) => {
     if (!window.confirm('Cancel this booking?')) return;
     try {
@@ -118,8 +114,13 @@ const CustomerDashboard = () => {
   };
 
   const openPaymentModal = (bookingId) => {
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) return;
     setSelectedBookingId(bookingId);
     setPhoneNumber('');
+    // Set default amount to remaining balance (or full amount if not paid)
+    const remaining = booking.total_amount - (booking.paid_amount || 0);
+    setPaymentAmount(remaining.toFixed(2));
     setShowPaymentModal(true);
   };
 
@@ -127,6 +128,7 @@ const CustomerDashboard = () => {
     setShowPaymentModal(false);
     setSelectedBookingId(null);
     setPhoneNumber('');
+    setPaymentAmount('');
     setIsPaying(false);
   };
 
@@ -134,6 +136,16 @@ const CustomerDashboard = () => {
     e.preventDefault();
     const booking = bookings.find(b => b.id === selectedBookingId);
     if (!booking) return;
+    const amount = parseFloat(paymentAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Please enter a valid positive amount');
+      return;
+    }
+    const remaining = booking.total_amount - (booking.paid_amount || 0);
+    if (amount > remaining) {
+      toast.error(`Amount cannot exceed remaining balance: Kshs ${remaining.toFixed(2)}`);
+      return;
+    }
     if (!phoneNumber.trim() || !/^[0-9]{10,12}$/.test(phoneNumber.replace(/\s/g, ''))) {
       toast.error('Please enter a valid phone number (e.g., 254712345678)');
       return;
@@ -142,7 +154,7 @@ const CustomerDashboard = () => {
     try {
       const response = await api.post('/payments', {
         booking_id: selectedBookingId,
-        amount: booking.total_amount,
+        amount: amount,
         payment_method: 'mpesa',
         mpesa_phone: phoneNumber,
       });
@@ -151,7 +163,6 @@ const CustomerDashboard = () => {
       if (response.data.status === 'pending') {
         toast.info('STK push sent. Please check your phone and enter your PIN to complete payment.');
         closePaymentModal();
-        // Start polling
         pollPaymentStatus(paymentId, booking.id);
       } else {
         toast.success('Payment completed successfully!');
@@ -166,7 +177,6 @@ const CustomerDashboard = () => {
     }
   };
 
-  // Tabs rendering
   const renderOverview = () => (
     <div>
       <div className="mb-6">
@@ -194,24 +204,28 @@ const CustomerDashboard = () => {
 
       {upcomingBookings.length > 0 && (
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
-          <h3 className="font-semibold text-lg mb-3">Pending/Confirmed Bookings – Pay Now</h3>
+          <h3 className="font-semibold text-lg mb-3">Pending/Confirmed Bookings</h3>
           <div className="space-y-3">
-            {upcomingBookings.map(b => (
-              <div key={b.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium">{b.service}</p>
-                  <p className="text-sm text-gray-500">{new Date(b.booking_date).toLocaleString()} • Kshs {b.total_amount}</p>
+            {upcomingBookings.map(b => {
+              const remaining = b.total_amount - (b.paid_amount || 0);
+              return (
+                <div key={b.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium">{b.service}</p>
+                    <p className="text-sm text-gray-500">{new Date(b.booking_date).toLocaleString()} - Kshs {b.total_amount}</p>
+                    <p className="text-xs text-gray-400">Paid: Kshs {b.paid_amount || 0} | Remaining: Kshs {remaining.toFixed(2)}</p>
+                  </div>
+                  <button
+                    onClick={() => openPaymentModal(b.id)}
+                    disabled={isPaying || remaining <= 0}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center disabled:opacity-50"
+                  >
+                    {isPaying ? <Loader className="w-4 h-4 mr-1 animate-spin" /> : <CreditCard className="w-4 h-4 mr-1" />}
+                    {isPaying ? 'Processing...' : remaining <= 0 ? 'Fully Paid' : 'Pay Now'}
+                  </button>
                 </div>
-                <button
-                  onClick={() => openPaymentModal(b.id)}
-                  disabled={isPaying}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition flex items-center disabled:opacity-50"
-                >
-                  {isPaying ? <Loader className="w-4 h-4 mr-1 animate-spin" /> : <CreditCard className="w-4 h-4 mr-1" />}
-                  {isPaying ? 'Processing...' : 'Pay Now'}
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -279,6 +293,7 @@ const CustomerDashboard = () => {
               <th className="p-3 text-left">Service</th>
               <th className="p-3 text-left">Date & Time</th>
               <th className="p-3 text-left">Amount</th>
+              <th className="p-3 text-left">Paid</th>
               <th className="p-3 text-left">Status</th>
               <th className="p-3 text-center">Actions</th>
             </tr>
@@ -291,35 +306,40 @@ const CustomerDashboard = () => {
                 completed: 'bg-green-100 text-green-800',
                 cancelled: 'bg-red-100 text-red-800',
               };
+              const remaining = b.total_amount - (b.paid_amount || 0);
               return (
                 <tr key={b.id} className="border-t hover:bg-gray-50">
                   <td className="p-3">{b.service}</td>
                   <td className="p-3">{new Date(b.booking_date).toLocaleString()}</td>
                   <td className="p-3">Kshs {b.total_amount}</td>
+                  <td className="p-3">Kshs {b.paid_amount || 0}</td>
                   <td className="p-3">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[b.status]}`}>
                       {b.status.charAt(0).toUpperCase() + b.status.slice(1)}
                     </span>
                   </td>
                   <td className="p-3 text-center space-x-2">
+                    {b.status !== 'cancelled' && b.status !== 'completed' && remaining > 0 && (
+                      <button
+                        onClick={() => openPaymentModal(b.id)}
+                        disabled={isPaying}
+                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs transition flex items-center mx-auto disabled:opacity-50"
+                      >
+                        {isPaying ? <Loader className="w-3 h-3 mr-1 animate-spin" /> : <CreditCard className="w-3 h-3 mr-1" />}
+                        {isPaying ? 'Processing' : 'Pay'}
+                      </button>
+                    )}
+                    {b.status !== 'cancelled' && b.status !== 'completed' && remaining <= 0 && (
+                      <span className="text-green-600 text-xs font-medium">Fully Paid</span>
+                    )}
                     {b.status !== 'cancelled' && b.status !== 'completed' && (
-                      <>
-                        <button
-                          onClick={() => openPaymentModal(b.id)}
-                          disabled={isPaying}
-                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-xs transition flex items-center mx-auto disabled:opacity-50"
-                        >
-                          {isPaying ? <Loader className="w-3 h-3 mr-1 animate-spin" /> : <CreditCard className="w-3 h-3 mr-1" />}
-                          {isPaying ? 'Processing' : 'Pay'}
-                        </button>
-                        <button
-                          onClick={() => handleCancelBooking(b.id)}
-                          className="text-red-600 hover:bg-red-50 p-1 rounded"
-                          title="Cancel"
-                        >
-                          <XCircle className="w-4 h-4" />
-                        </button>
-                      </>
+                      <button
+                        onClick={() => handleCancelBooking(b.id)}
+                        className="text-red-600 hover:bg-red-50 p-1 rounded"
+                        title="Cancel"
+                      >
+                        <XCircle className="w-4 h-4" />
+                      </button>
                     )}
                     {b.status === 'completed' && <span className="text-green-600 text-xs font-medium">Paid</span>}
                     {b.status === 'cancelled' && <span className="text-red-600 text-xs font-medium">Cancelled</span>}
@@ -360,7 +380,7 @@ const CustomerDashboard = () => {
                   </span>
                 </td>
                 <td className="p-3">{new Date(p.payment_date).toLocaleDateString()}</td>
-                <td className="p-3">{p.mpesa_phone || '—'}</td>
+                <td className="p-3">{p.mpesa_phone || 'Not provided'}</td>
               </tr>
             ))}
           </tbody>
@@ -369,27 +389,43 @@ const CustomerDashboard = () => {
     </div>
   );
 
-  // Payment modal
   const renderPaymentModal = () => {
     if (!showPaymentModal) return null;
     const booking = bookings.find(b => b.id === selectedBookingId);
     if (!booking) return null;
+    const remaining = booking.total_amount - (booking.paid_amount || 0);
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-xl max-w-md w-full p-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold">Pay with M‑Pesa</h3>
+            <h3 className="text-xl font-bold">Pay with M-Pesa</h3>
             <button onClick={closePaymentModal} className="text-gray-500 hover:text-gray-700">
               <X className="w-5 h-5" />
             </button>
           </div>
           <div className="mb-4 p-3 bg-gray-50 rounded-lg">
             <p className="text-sm text-gray-600">Service: <span className="font-semibold">{booking.service}</span></p>
-            <p className="text-sm text-gray-600">Amount: <span className="font-semibold">Kshs {booking.total_amount}</span></p>
+            <p className="text-sm text-gray-600">Total: <span className="font-semibold">Kshs {booking.total_amount}</span></p>
+            <p className="text-sm text-gray-600">Paid: <span className="font-semibold">Kshs {booking.paid_amount || 0}</span></p>
+            <p className="text-sm text-gray-600">Remaining: <span className="font-semibold text-blue-600">Kshs {remaining.toFixed(2)}</span></p>
           </div>
           <form onSubmit={handlePaymentSubmit}>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">M‑Pesa Phone Number</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Amount to Pay (Kshs)</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0.01"
+                max={remaining}
+                value={paymentAmount}
+                onChange={(e) => setPaymentAmount(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">Max: Kshs {remaining.toFixed(2)}</p>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">M-Pesa Phone Number</label>
               <input
                 type="tel"
                 value={phoneNumber}
