@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
-import { Calendar, Clock, CheckCircle, XCircle, CreditCard, X, Loader } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, XCircle, CreditCard, X, Loader, Car } from 'lucide-react';
 import api from '../../services/api';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
+import VehicleManager from '../../components/VehicleManager';  // <-- import
 
 const CustomerDashboard = () => {
   const { user } = useAuth();
@@ -118,7 +119,6 @@ const CustomerDashboard = () => {
     if (!booking) return;
     setSelectedBookingId(bookingId);
     setPhoneNumber('');
-    // Set default amount to remaining balance (or full amount if not paid)
     const remaining = booking.total_amount - (booking.paid_amount || 0);
     setPaymentAmount(remaining.toFixed(2));
     setShowPaymentModal(true);
@@ -389,6 +389,14 @@ const CustomerDashboard = () => {
     </div>
   );
 
+  // ---------- VEHICLES ----------
+  const renderVehicles = () => (
+    <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+      <h2 className="text-xl font-bold mb-4">My Vehicles</h2>
+      <VehicleManager />
+    </div>
+  );
+
   const renderPaymentModal = () => {
     if (!showPaymentModal) return null;
     const booking = bookings.find(b => b.id === selectedBookingId);
@@ -457,6 +465,7 @@ const CustomerDashboard = () => {
     { id: 'overview', label: 'Overview', icon: Calendar },
     { id: 'bookings', label: 'My Bookings', icon: Clock },
     { id: 'payments', label: 'My Payments', icon: CheckCircle },
+    { id: 'vehicles', label: 'Vehicles', icon: Car },
   ];
 
   if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
@@ -492,6 +501,7 @@ const CustomerDashboard = () => {
         {activeTab === 'overview' && renderOverview()}
         {activeTab === 'bookings' && renderBookings()}
         {activeTab === 'payments' && renderPayments()}
+        {activeTab === 'vehicles' && renderVehicles()}
       </div>
       <Footer />
       {renderPaymentModal()}
