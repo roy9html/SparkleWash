@@ -12,6 +12,9 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import CustomerDashboard from "./pages/customer/Dashboard";
 import AdminDashboard from "./pages/admin/Dashboard";
+import Profile from "./pages/Profile";
+import CustomerBookings from "./pages/CustomerBookings";
+import AdminUsers from "./pages/AdminUsers";
 import Background from "./components/Background";
 
 function App() {
@@ -20,6 +23,7 @@ function App() {
       <Toaster position="top-right" richColors closeButton />
       <Background />
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/services" element={<Services />} />
@@ -29,15 +33,22 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 
-        {/* Redirect /dashboard to customer dashboard (or role-based) */}
+        {/* Redirect /dashboard to customer dashboard */}
         <Route path="/dashboard" element={<Navigate to="/customer/dashboard" replace />} /> 
+
+  
+        <Route element={<ProtectedRoute allowedRoles={["customer", "admin"]} />}>
+          <Route path="/profile" element={<Profile />} />
+        </Route>
 
         <Route element={<ProtectedRoute allowedRoles={["customer"]} />}>
           <Route path="/customer/dashboard" element={<CustomerDashboard />} />
+          <Route path="/customer/bookings" element={<CustomerBookings />} />
         </Route>
 
         <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
