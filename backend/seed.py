@@ -1,11 +1,11 @@
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from extensions import db
 from models.user import User
 from models.service import Service
 from models.booking import Booking
 from models.payment import Payment
-from models.vehicle import Vehicle   
+from models.vehicle import Vehicle
 
 def seed_database():
     db.drop_all()
@@ -24,12 +24,17 @@ def seed_database():
 
     db.session.commit()
 
+    # ----- SEED VEHICLES -----
     vehicle_data = [
         {'plate_number': 'KAA 123A', 'make': 'Toyota', 'model': 'Camry', 'year': 2020, 'color': 'Silver'},
         {'plate_number': 'KBB 456B', 'make': 'Honda', 'model': 'Civic', 'year': 2019, 'color': 'Red'},
         {'plate_number': 'KCC 789C', 'make': 'Ford', 'model': 'Mustang', 'year': 2021, 'color': 'Blue'},
         {'plate_number': 'KDD 012D', 'make': 'Nissan', 'model': 'Altima', 'year': 2022, 'color': 'White'},
     ]
+
+    # Map customer id to list of their vehicle ids
+    customer_vehicles = {}
+
     for idx, customer in enumerate(customers):
         v = vehicle_data[idx % len(vehicle_data)]
         vehicle = Vehicle(
@@ -39,10 +44,14 @@ def seed_database():
             model=v['model'],
             year=v['year'],
             color=v['color'],
-            is_default=(idx == 0)  
+            is_default=(idx == 0)
         )
         db.session.add(vehicle)
+        # Store the vehicle object for later commit
+        # We'll commit after adding all vehicles, but we need the ids, so we'll do a flush or commit.
+        # Better: commit after adding all vehicles to get ids.
 
+    # Add extra vehicle for customer 1 (idx 0)
     extra_vehicle = Vehicle(
         user_id=customers[0].id,
         plate_number='KEE 345E',
@@ -54,8 +63,17 @@ def seed_database():
     )
     db.session.add(extra_vehicle)
 
+    # Commit to get vehicle ids
     db.session.commit()
 
+    # Now build customer_vehicles mapping
+    all_vehicles = Vehicle.query.all()
+    for vehicle in all_vehicles:
+        if vehicle.user_id not in customer_vehicles:
+            customer_vehicles[vehicle.user_id] = []
+        customer_vehicles[vehicle.user_id].append(vehicle.id)
+
+    # ----- SEED SERVICES -----
     services_data = [
         {'name': 'Basic Wash', 'description': 'Exterior wash and dry', 'price': 800, 'duration_minutes': 30},
         {'name': 'Premium Wash', 'description': 'Exterior wash, wax, and interior vacuum', 'price': 1500, 'duration_minutes': 45},
@@ -70,11 +88,19 @@ def seed_database():
         services.append(service)
     db.session.commit()
 
+    # ----- SEED BOOKINGS AND PAYMENTS -----
+    now = datetime.now(timezone.utc)
     for i in range(1, 5):
+        # Pick a random customer
+        customer = random.choice(customers)
+        # Pick a random vehicle belonging to that customer
+        vehicle_id = random.choice(customer_vehicles.get(customer.id, []))
+
         booking = Booking(
-            user_id=random.choice(customers).id,
+            user_id=customer.id,
             service_id=random.choice(services).id,
-            booking_date=datetime.utcnow() + timedelta(days=random.randint(1, 10)),
+            vehicle_id=vehicle_id,   # <-- now we have a vehicle_id
+            booking_date=now + timedelta(days=random.randint(1, 10)),
             status=random.choice(['pending', 'confirmed', 'completed', 'cancelled']),
             total_amount=random.choice([800, 1500, 2800, 3200, 2000]),
             notes=f'Booking {i} notes'
