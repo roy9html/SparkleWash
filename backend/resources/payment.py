@@ -7,6 +7,7 @@ from models.booking import Booking
 from schemas.payment_schema import PaymentSchema
 from utils.auth_helpers import role_required, get_current_user
 from utils.mpesa import stk_push
+import re
 
 payment_schema = PaymentSchema()
 
@@ -46,21 +47,25 @@ class PaymentList(Resource):
             logger.warning(f"Booking not found: {data['booking_id']}")
             return {'message': 'Booking not found'}, 404
 
-        logger.info(f"Booking found: user_id={booking.user_id}, total_amount={booking.total_amount}, status={booking.status}")
+        # Handle None paid_amount
+        paid_amount = booking.paid_amount or 0.0
+        remaining = booking.total_amount - paid_amount
+        logger.info(f"Booking found: user_id={booking.user_id}, total_amount={booking.total_amount}, paid_amount={paid_amount}, remaining={remaining}, status={booking.status}")
 
         if booking.user_id != current_user_id:
             logger.warning(f"User {current_user_id} tried to pay for booking {booking.id} owned by {booking.user_id}")
-            return {'message': 'Tajiri! You can only pay for your own bookings'}, 403
+            return {'message': 'You can only pay for your own bookings'}, 403
 
-        if booking.status in ['completed', 'cancelled']:
-            logger.warning(f"Booking {booking.id} status is {booking.status}, cannot pay")
-            return {'message': f'Booking is already {booking.status} and cannot be paid'}, 400
+        if booking.status == 'cancelled':
+            logger.warning(f"Booking {booking.id} is cancelled, cannot pay")
+            return {'message': 'Cancelled bookings cannot be paid'}, 400
 
-        if float(data['amount']) != float(booking.total_amount):
-            logger.warning(f"Amount mismatch: sent {data['amount']}, expected {booking.total_amount}")
-            return {'message': f'Amount must equal booking total: {booking.total_amount}'}, 400
+        # Validate amount: must be > 0 and <= remaining amount
+        if data['amount'] <= 0 or data['amount'] > remaining:
+            logger.warning(f"Invalid amount: {data['amount']}, remaining: {remaining}")
+            return {'message': f'Amount must be between 1 and remaining balance {remaining}'}, 400
 
-        # build status ya payemnet
+        # Create payment record with pending status
         payment = Payment(
             booking_id=data['booking_id'],
             user_id=current_user_id,
@@ -73,10 +78,8 @@ class PaymentList(Resource):
         db.session.commit()
         logger.info(f"Payment record created with id {payment.id}")
 
-        # start stk push 
+        # Clean phone number
         phone = data['mpesa_phone'].strip()
-        #clean phone number input
-        import re
         phone = re.sub(r'\s', '', phone)
         if phone.startswith('0'):
             phone = '254' + phone[1:]
@@ -164,10 +167,18 @@ class PaymentCallback(Resource):
         data = request.get_json()
         logger.info(f"Received M-Pesa callback: {data}")
 
+        if not data:
+            logger.error("No data received in callback")
+            return {'ResultCode': 1, 'ResultDesc': 'No data received'}, 400
+
         body = data.get('Body', {})
         stk_callback = body.get('stkCallback', {})
         result_code = stk_callback.get('ResultCode')
         checkout_request_id = stk_callback.get('CheckoutRequestID')
+
+        if not checkout_request_id:
+            logger.error("No CheckoutRequestID in callback")
+            return {'ResultCode': 1, 'ResultDesc': 'No CheckoutRequestID'}, 400
 
         payment = Payment.query.filter_by(transaction_id=checkout_request_id).first()
         if not payment:
@@ -179,11 +190,20 @@ class PaymentCallback(Resource):
             payment.mpesa_receipt = stk_callback.get('MerchantRequestID')
             booking = payment.booking
             if booking:
-                booking.status = 'completed'
+                # Handle None paid_amount
+                booking.paid_amount = (booking.paid_amount or 0.0) + payment.amount
+                if booking.paid_amount >= booking.total_amount:
+                    booking.status = 'completed'
+                    logger.info(f"Booking {booking.id} fully paid, status set to completed")
+                else:
+                    if booking.status == 'pending' and booking.paid_amount > 0:
+                        booking.status = 'confirmed'
+                    logger.info(f"Booking {booking.id} partial payment, status set to confirmed")
             logger.info(f"Payment {payment.id} completed successfully")
         else:
             payment.status = 'failed'
-            logger.warning(f"Payment {payment.id} failed: {stk_callback.get('ResultDesc')}")
+            result_desc = stk_callback.get('ResultDesc', 'Unknown error')
+            logger.warning(f"Payment {payment.id} failed: {result_desc}")
 
         db.session.commit()
         return {'ResultCode': 0, 'ResultDesc': 'Success'}, 200
