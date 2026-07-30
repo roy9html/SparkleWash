@@ -11,6 +11,7 @@ from resources.user import UserList, UserDetail
 from resources.service import ServiceList, ServiceDetail
 from resources.booking import BookingList, BookingDetail
 from resources.payment import PaymentList, PaymentDetail, PaymentCallback
+from resources.vehicle import VehicleList, VehicleDetail
 
 def create_app():
     configure_logging()
@@ -75,6 +76,8 @@ def create_app():
     api.add_resource(PaymentCallback, '/payments/callback')
     print("Registered /payments/callback")
     print("=== Done ===")
+    api.add_resource(VehicleList,'/vehicles')
+    api.add_resource(VehicleDetail, '/vehicles/<int:vehicle_id>')
 
     logger.info("Application created successfully")
     return app

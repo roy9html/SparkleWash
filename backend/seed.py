@@ -5,6 +5,7 @@ from models.user import User
 from models.service import Service
 from models.booking import Booking
 from models.payment import Payment
+from models.vehicle import Vehicle   
 
 def seed_database():
     db.drop_all()
@@ -20,6 +21,38 @@ def seed_database():
         user.set_password('password123')
         db.session.add(user)
         customers.append(user)
+
+    db.session.commit()
+
+    vehicle_data = [
+        {'plate_number': 'KAA 123A', 'make': 'Toyota', 'model': 'Camry', 'year': 2020, 'color': 'Silver'},
+        {'plate_number': 'KBB 456B', 'make': 'Honda', 'model': 'Civic', 'year': 2019, 'color': 'Red'},
+        {'plate_number': 'KCC 789C', 'make': 'Ford', 'model': 'Mustang', 'year': 2021, 'color': 'Blue'},
+        {'plate_number': 'KDD 012D', 'make': 'Nissan', 'model': 'Altima', 'year': 2022, 'color': 'White'},
+    ]
+    for idx, customer in enumerate(customers):
+        v = vehicle_data[idx % len(vehicle_data)]
+        vehicle = Vehicle(
+            user_id=customer.id,
+            plate_number=v['plate_number'],
+            make=v['make'],
+            model=v['model'],
+            year=v['year'],
+            color=v['color'],
+            is_default=(idx == 0)  
+        )
+        db.session.add(vehicle)
+
+    extra_vehicle = Vehicle(
+        user_id=customers[0].id,
+        plate_number='KEE 345E',
+        make='BMW',
+        model='X5',
+        year=2023,
+        color='Black',
+        is_default=False
+    )
+    db.session.add(extra_vehicle)
 
     db.session.commit()
 
@@ -72,7 +105,7 @@ def seed_database():
             db.session.add(payment)
 
     db.session.commit()
-    print("Database seeded with sample data.")
+    print("Database seeded with sample data (users, vehicles, services, bookings, payments).")
 
 if __name__ == '__main__':
     from app import create_app
