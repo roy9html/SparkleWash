@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://sparklewash-8v9d.onrender.com",  // <-- hardcoded
+  baseURL: "https://sparklewash-8v9d.onrender.com",  
   headers: { "Content-Type": "application/json" },
 });
 
