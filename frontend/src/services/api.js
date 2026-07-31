@@ -21,10 +21,14 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("accessToken");
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 500);
+      // Don't redirect if the request was to /auth/login (login failure)
+      const isLoginRequest = error.config?.url?.includes('/auth/login');
+      if (!isLoginRequest) {
+        localStorage.removeItem("accessToken");
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 500);
+      }
     }
     return Promise.reject(error);
   }
