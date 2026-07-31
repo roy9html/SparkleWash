@@ -27,10 +27,10 @@ def create_app():
 
     # CORS configuration
     cors.init_app(app,
-                  resources={r"/*": {"origins": "http://localhost:5173"}},
-                  supports_credentials=True,
-                  allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
-                  methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+              resources={r"/*": {"origins": ["http://localhost:5173", "https://sparkle-wash-av54.vercel.app"]}},
+              supports_credentials=True,
+              allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
+              methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
     jwt.init_app(app)
 
