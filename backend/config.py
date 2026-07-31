@@ -28,7 +28,6 @@ class Config:
 
     LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
 
-    # ---------- M-PESA CONFIGURATION ----------
     MPESA_CONSUMER_KEY = os.environ.get('MPESA_CONSUMER_KEY')
     MPESA_CONSUMER_SECRET = os.environ.get('MPESA_CONSUMER_SECRET')
     MPESA_PASSKEY = os.environ.get('MPESA_PASSKEY')
