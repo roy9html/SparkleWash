@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000",
+  baseURL: "https://sparklewash-8v9d.onrender.com",  // <-- hardcoded
   headers: { "Content-Type": "application/json" },
 });
 
@@ -16,12 +16,10 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Add response interceptor to handle 401 errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Don't redirect if the request was to /auth/login (login failure)
       const isLoginRequest = error.config?.url?.includes('/auth/login');
       if (!isLoginRequest) {
         localStorage.removeItem("accessToken");
