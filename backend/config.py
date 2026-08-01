@@ -43,5 +43,8 @@ class Config:
     BREVO_SENDER_NAME = os.environ.get('BREVO_SENDER_NAME', 'SparkleWash')
 
 
+    FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+
+
 
  
