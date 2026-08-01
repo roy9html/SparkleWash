@@ -9,7 +9,6 @@ def get_access_token():
     consumer_key = current_app.config.get('MPESA_CONSUMER_KEY')
     consumer_secret = current_app.config.get('MPESA_CONSUMER_SECRET')
 
-    # Log if any are None
     if not consumer_key or not consumer_secret:
         logger.error("MPESA_CONSUMER_KEY or MPESA_CONSUMER_SECRET is missing or None")
         return None
@@ -35,7 +34,6 @@ def get_access_token():
             timeout=10
         )
         logger.info(f"Token request status: {response.status_code}")
-        logger.info(f"Token response headers: {response.headers}")
         logger.info(f"Token response body: {response.text}")
 
         if response.status_code == 200:
@@ -46,7 +44,6 @@ def get_access_token():
                 logger.error("Access token not found in response")
                 return None
         else:
-            # Try to parse error from JSON
             try:
                 error_data = response.json()
                 logger.error(f"Token request failed: {response.status_code} - {error_data}")
@@ -66,7 +63,11 @@ def get_access_token():
 def generate_password(shortcode, passkey):
     """Generate base64 encoded password for STK push."""
     timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-    data = shortcode + passkey + timestamp
+    # IMPORTANT: No space between passkey and timestamp – correct format is shortcode + passkey + timestamp
+    data = f"{shortcode}{passkey}{timestamp}"
+    # Debug log to verify the raw data (mask passkey partially)
+    masked_passkey = passkey[:4] + "..." + passkey[-4:] if passkey and len(passkey) > 8 else passkey
+    logger.info(f"DEBUG: shortcode={shortcode}, passkey={masked_passkey}, timestamp={timestamp}")
     encoded = base64.b64encode(data.encode()).decode()
     return encoded, timestamp
 
@@ -86,6 +87,11 @@ def stk_push(phone_number, amount, account_reference, transaction_desc, callback
 
     shortcode = current_app.config.get('MPESA_SHORTCODE', '174379')
     passkey = current_app.config.get('MPESA_PASSKEY')
+    
+    # Debug: log shortcode and passkey (masked)
+    masked_passkey = passkey[:4] + "..." + passkey[-4:] if passkey and len(passkey) > 8 else passkey
+    logger.info(f"DEBUG: Using shortcode='{shortcode}', passkey='{masked_passkey}'")
+
     password, timestamp = generate_password(shortcode, passkey)
 
     url = 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest'
@@ -103,7 +109,7 @@ def stk_push(phone_number, amount, account_reference, transaction_desc, callback
         'Password': password,
         'Timestamp': timestamp,
         'TransactionType': 'CustomerPayBillOnline',
-        'Amount': int(amount),
+        'Amount': 1,
         'PartyA': phone_number,
         'PartyB': shortcode,
         'PhoneNumber': phone_number,
