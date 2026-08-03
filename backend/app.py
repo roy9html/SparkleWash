@@ -25,12 +25,14 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
 
-    # CORS configuration
+    # ----- CORS configuration (read from environment) -----
+    # app.config['ALLOWED_ORIGINS'] is set in Config as a list
+    allowed_origins = app.config.get('ALLOWED_ORIGINS', ['http://localhost:5173'])
     cors.init_app(app,
-              resources={r"/*": {"origins": ["http://localhost:5173", "https://sparkle-wash1.vercel.app"]}},
-              supports_credentials=True,
-              allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
-              methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+                  resources={r"/*": {"origins": allowed_origins}},
+                  supports_credentials=True,
+                  allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
+                  methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
 
     jwt.init_app(app)
 

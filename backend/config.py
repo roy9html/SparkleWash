@@ -45,6 +45,8 @@ class Config:
 
     FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
 
+    ALLOWED_ORIGINS = os.environ.get('ALLOWED_ORIGINS', 'http://localhost:5173,https://sparkle-wash1.vercel.app').split(',')
+
 
 
  
