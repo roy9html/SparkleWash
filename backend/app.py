@@ -25,8 +25,7 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
 
-    # ----- CORS configuration (read from environment) -----
-    # app.config['ALLOWED_ORIGINS'] is set in Config as a list
+    # ----- CORS configuration (READS FROM config.ALLOWED_ORIGINS) -----
     allowed_origins = app.config.get('ALLOWED_ORIGINS', ['http://localhost:5173'])
     cors.init_app(app,
                   resources={r"/*": {"origins": allowed_origins}},
